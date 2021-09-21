@@ -5,16 +5,10 @@ document.body.style.height = "100%";
 document.body.style.margin = "0";
 document.body.style.padding = "0";
 
-const title = document.createElement("p");
-title.innerText = "Babylon.js Proving Ground";
-title.style.fontSize = "32pt";
-title.style.textAlign = "center";
-document.body.appendChild(title);
-
 const div = document.createElement("div");
-div.style.width = "60%";
+div.style.width = "25%";
 div.style.margin = "0 auto";
-div.style.aspectRatio = "16 / 9";
+div.style.aspectRatio = "9 / 16";
 document.body.appendChild(div);
 
 const canvas = document.createElement("canvas");
