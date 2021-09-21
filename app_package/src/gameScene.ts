@@ -1,6 +1,7 @@
-import { Color3, Color4, Engine, Scene, SpotLight, Tools, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, Engine, Material, Scene, SpotLight, StandardMaterial, Tools, Vector3 } from "@babylonjs/core";
 import { Drop } from "./drop";
 import { OrthoCamera } from "./orthoCamera";
+import { RainbowButton } from "./rainbowButton";
 
 export enum GameSceneState {
     Raining,
@@ -10,6 +11,9 @@ export enum GameSceneState {
 export class GameScene extends Scene {
     private _state: GameSceneState;
     private _camera: OrthoCamera;
+    private _buttons: Array<RainbowButton>;
+    
+    public dropMaterials: Array<Material>;
 
     public get State() {
         return this._state;
@@ -21,7 +25,26 @@ export class GameScene extends Scene {
         this._camera = new OrthoCamera(this);
         this.clearColor = new Color4(0, 0, 0, 1);
 
-        // TODO: Create the buttons.
+        const colors = [
+            new Color3(1.0, 0.0, 0.0),
+            new Color3(1.0, 0.5, 0.0),
+            new Color3(1.0, 1.0, 0.0),
+            new Color3(0.0, 1.0, 0.0),
+            new Color3(0.0, 0.0, 1.0),
+            new Color3(1.0, 0.0, 1.0)
+        ];
+        this._buttons = new Array<RainbowButton>(colors.length);
+        for (let idx = 0; idx < colors.length; ++idx) {
+            this._buttons[idx] = new RainbowButton(this, colors[idx], 0.115 * (idx + 1));
+        }
+
+        this.dropMaterials = new Array<Material>(colors.length);
+        for (let idx = 0; idx < colors.length; ++idx) {
+            const mat = new StandardMaterial("colored_material", this);
+            mat.diffuseColor = colors[idx];
+            mat.specularPower = 1000;
+            this.dropMaterials[idx] = mat;
+        }
 
         this.onBeforeRenderObservable.runCoroutineAsync(this._runLightSystem());
         this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine());
@@ -42,16 +65,17 @@ export class GameScene extends Scene {
         const setLightDirection = (light: SpotLight) => {
             light.direction.copyFrom(light.position);
             light.direction.negateInPlace();
+            light.direction.z += 5;
             light.direction.normalize();
         }
-        const redLight = new SpotLight("redLight", new Vector3(-3, 3, -5), Vector3.Down(), Math.PI / 6, 1, this);
-        redLight.diffuse = Color3.Red();
-        const greenLight = new SpotLight("greenLight", new Vector3(0, 3, -5), Vector3.Down(), Math.PI / 6, 1, this);
-        greenLight.diffuse = Color3.Green();
-        const blueLight = new SpotLight("blueLight", new Vector3(3, 3, -5), Vector3.Down(), Math.PI / 6, 1, this);
-        blueLight.diffuse = Color3.Blue();
+        const redLight = new SpotLight("redLight", new Vector3(-3, 3, -5), Vector3.Down(), Math.PI, 1, this);
+        redLight.diffuse = new Color3(1.0, 0.5, 0.5);
+        const greenLight = new SpotLight("greenLight", new Vector3(0, 3, -5), Vector3.Down(), Math.PI, 1, this);
+        greenLight.diffuse = new Color3(0.5, 1.0, 0.5);
+        const blueLight = new SpotLight("blueLight", new Vector3(3, 3, -5), Vector3.Down(), Math.PI, 1, this);
+        blueLight.diffuse = new Color3(0.5, 0.5, 1.0);
         
-        const TIME_SCALE = 10;
+        const TIME_SCALE = 1;
         let t = 0;
         while (true) { 
             t += (TIME_SCALE / (60 * this.getAnimationRatio()));

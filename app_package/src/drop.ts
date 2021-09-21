@@ -25,6 +25,7 @@ export class Drop extends TransformNode {
 
         this.position.x = 0.3 * (Math.random() - 0.5);
         this.position.y = 1.05;
+        this.position.z = -1;
 
         this._falling = true;
         await this.getScene().onBeforeRenderObservable.runCoroutineAsync(this.fallCoroutine());
@@ -33,6 +34,7 @@ export class Drop extends TransformNode {
     }
 
     private *fallCoroutine() {
+        this._mesh.material = this._gameScene.dropMaterials[Math.floor(Math.random() * this._gameScene.dropMaterials.length)];
         this._mesh.isVisible = true;
 
         const FALL_SPEED = 0.005;
