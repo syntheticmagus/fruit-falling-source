@@ -1,5 +1,5 @@
-import { Color3, Color4, Engine, Material, Scene, SpotLight, StandardMaterial, Tools, Vector3 } from "@babylonjs/core";
-import { AdvancedDynamicTexture } from "@babylonjs/gui";
+import { Color3, Color4, Engine, Material, Observable, Scene, SpotLight, StandardMaterial, Tools, Vector3 } from "@babylonjs/core";
+import { AdvancedDynamicTexture, Button, Container, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
 import { OrthoCamera } from "./orthoCamera";
 import { RainbowButton } from "./rainbowButton";
@@ -25,18 +25,35 @@ export class GameScene extends Scene {
     private _activeDrops: Set<Drop>;
     private _inactiveDrops: Set<Drop>;
     private _failures: number;
+    private _score: number;
+    private _livesText: TextBlock;
+    private _scoreText: TextBlock;
 
     private get failures(): number {
         return this._failures;
     }
 
     private set failures(value: number) {
+        const MAX_FAILURES = 3;
         this._failures = value;
-        // TODO: If failures are too large, stop the game.
+        this._livesText.text = "♥:" + (MAX_FAILURES - this._failures);
+        if (this._failures >= MAX_FAILURES) {
+            this._endGame();
+        }
+    }
+
+    private get score() {
+        return this._score;
+    }
+
+    private set score(value: number) {
+        this._score = value;
+        this._scoreText.text = "Score:" + this._score;
     }
 
     public guiTexture: AdvancedDynamicTexture;
     public dropMaterials: Array<Material>;
+    public gameEndedObservable: Observable<void>;
 
     public get State() {
         return this._state;
@@ -77,6 +94,32 @@ export class GameScene extends Scene {
         this._activeDrops = new Set<Drop>();
         this._inactiveDrops = new Set<Drop>();
         this._failures = 0;
+
+        this._livesText = new TextBlock("lives", "");
+        this._livesText.color = "#FF0000FF";
+        this._livesText.fontStyle = "bold";
+        this._livesText.fontFamily = "Courier";
+        this._livesText.fontSize = "30";
+        this._livesText.resizeToFit = true;
+        this._livesText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
+        this._livesText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_RIGHT;
+        this.guiTexture.addControl(this._livesText);
+
+        this.failures = 0;
+
+        this._score = 0;
+        this._scoreText = new TextBlock("score", "");
+        this._scoreText.color = "#0000FFFF";
+        this._scoreText.fontStyle = "bold";
+        this._scoreText.fontFamily = "Courier";
+        this._scoreText.fontSize = "30";
+        this._scoreText.resizeToFit = true;
+        this._scoreText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
+        this._scoreText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_LEFT;
+        this.guiTexture.addControl(this._scoreText);
+        this.score = 0;
+
+        this.gameEndedObservable = new Observable<void>();
 
         this.onBeforeRenderObservable.runCoroutineAsync(this._runLightSystem());
         this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine());
@@ -143,12 +186,58 @@ export class GameScene extends Scene {
             if (Math.abs(drop.position.y - height) < 0.05) {
                 drop.Caught = true;
                 if (color === drop.Color) {
-                    // TODO: Increment success.
+                    this.score += 1;
                 } else {
                     this.failures += 1;
-                    // TODO: When failures are too large, switch to endgame UI.
                 }
             }
         });
+    }
+
+    private _endGame() {
+        this._state = GameSceneState.Ending;
+
+        this.guiTexture.dispose();
+
+        this.guiTexture = AdvancedDynamicTexture.CreateFullscreenUI("gui", true, this);
+
+        const modalContainer = new Container("modal");
+        modalContainer.background = "#FFFFFFA0";
+        modalContainer.width = "100%";
+        modalContainer.height = "100%";
+        this.guiTexture.addControl(modalContainer);
+
+        const stackPanel = new StackPanel("endUIStack");
+        this.guiTexture.addControl(stackPanel);
+        
+        const gameOverTextBlock = new TextBlock("gameOver", "Game Over");
+        gameOverTextBlock.color = "#FF0000FF";
+        gameOverTextBlock.fontStyle = "bold";
+        gameOverTextBlock.fontFamily = "Courier";
+        gameOverTextBlock.fontSize = "48";
+        gameOverTextBlock.resizeToFit = true;
+        stackPanel.addControl(gameOverTextBlock);
+
+        const finalScoreTextBlock = new TextBlock("finalScore", "Your Score: " + this.score);
+        finalScoreTextBlock.color = "#0000FFFF";
+        finalScoreTextBlock.fontStyle = "bold";
+        finalScoreTextBlock.fontFamily = "Courier";
+        finalScoreTextBlock.fontSize = "24";
+        finalScoreTextBlock.resizeToFit = true;
+        stackPanel.addControl(finalScoreTextBlock);
+        
+        const replayButton = Button.CreateSimpleButton("playAgain", "Play Again");
+        replayButton.width = "120px";
+        replayButton.height = "40px";
+        replayButton.background = "#00FF00FF";
+        replayButton.textBlock!.color = "#FFFFFFFF";
+        replayButton.textBlock!.fontStyle = "bold";
+        replayButton.textBlock!.fontFamily = "Courier";
+        replayButton.textBlock!.fontSize = "18";
+        replayButton.verticalAlignment = Button.VERTICAL_ALIGNMENT_BOTTOM;
+        replayButton.onPointerClickObservable.add(() => {
+            this.gameEndedObservable.notifyObservers();
+        });
+        this.guiTexture.addControl(replayButton);
     }
 }

@@ -9,8 +9,13 @@ export interface InitializeBabylonAppOptions {
 export function initializeBabylonApp(options: InitializeBabylonAppOptions) {
     const canvas = options.canvas;
     const engine = new Engine(canvas);
-    //const scene = CreatePlaygroundScene(engine, canvas);
-    const scene = new GameScene(engine);
+    let scene = new GameScene(engine);
+    const gameEndedHandler = () => {
+        scene.dispose();
+        scene = new GameScene(engine);
+        scene.gameEndedObservable.add(gameEndedHandler);
+    };
+    scene.gameEndedObservable.add(gameEndedHandler);
     engine.runRenderLoop(() => {
         scene.render();
     });
