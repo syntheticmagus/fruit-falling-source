@@ -22,7 +22,18 @@ export class GameScene extends Scene {
     private _state: GameSceneState;
     private _camera: OrthoCamera;
     private _buttons: Array<RainbowButton>;
-    private _drops: Set<Drop>;
+    private _activeDrops: Set<Drop>;
+    private _inactiveDrops: Set<Drop>;
+    private _failures: number;
+
+    private get failures(): number {
+        return this._failures;
+    }
+
+    private set failures(value: number) {
+        this._failures = value;
+        // TODO: If failures are too large, stop the game.
+    }
 
     public guiTexture: AdvancedDynamicTexture;
     public dropMaterials: Array<Material>;
@@ -63,7 +74,9 @@ export class GameScene extends Scene {
             this.dropMaterials[idx] = mat;
         }
 
-        this._drops = new Set<Drop>();
+        this._activeDrops = new Set<Drop>();
+        this._inactiveDrops = new Set<Drop>();
+        this._failures = 0;
 
         this.onBeforeRenderObservable.runCoroutineAsync(this._runLightSystem());
         this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine());
@@ -71,12 +84,21 @@ export class GameScene extends Scene {
 
     private *_rainDropsCoroutine() {
         while (this._state === GameSceneState.Raining) {
-            const drop = new Drop(this);
-            this._drops.add(drop);
+            let drop: Drop;
+            if (this._inactiveDrops.size > 0) {
+                drop = this._inactiveDrops.values().next().value;
+                this._inactiveDrops.delete(drop);
+                this._activeDrops.add(drop);
+            } else {
+                drop = new Drop(this);
+                drop.onFinishedFallingObservable.add(() => {
+                    this.failures += 1;
+                });
+            }
+            this._activeDrops.add(drop);
             drop.fallAsync().then(() => {
-                // TODO: Pool these instead of disposing them.
-                this._drops.delete(drop);
-                drop.dispose();
+                this._activeDrops.delete(drop);
+                this._inactiveDrops.add(drop);
             });
             yield Tools.DelayAsync(1000);
         }
@@ -98,7 +120,7 @@ export class GameScene extends Scene {
         
         const TIME_SCALE = 1;
         let t = 0;
-        while (true) { 
+        while (this._state === GameSceneState.Raining) { 
             t += (TIME_SCALE / (60 * this.getAnimationRatio()));
             redLight.position.x = 3 * Math.sin(t);
             greenLight.position.x = 3 * Math.cos(t);
@@ -117,9 +139,15 @@ export class GameScene extends Scene {
     }
 
     private _handleButtonPressed(height: number, color: GameButtonColors) {
-        this._drops.forEach((drop) => {
-            if (Math.abs(drop.position.y - height) < 0.05 && color === drop.Color) {
+        this._activeDrops.forEach((drop) => {
+            if (Math.abs(drop.position.y - height) < 0.05) {
                 drop.Caught = true;
+                if (color === drop.Color) {
+                    // TODO: Increment success.
+                } else {
+                    this.failures += 1;
+                    // TODO: When failures are too large, switch to endgame UI.
+                }
             }
         });
     }
