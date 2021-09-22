@@ -16,6 +16,15 @@ canvas.id = "renderCanvas";
 canvas.style.width = "100%";
 canvas.style.height = "100%";
 canvas.style.display = "block";
+
+const fullscreenButton = document.createElement("button");
+fullscreenButton.textContent = "Go fullscreen!";
+fullscreenButton.addEventListener("click", () => {
+    canvas.requestFullscreen();
+});
+fullscreenButton.style.width = "100%";
+
+div.appendChild(fullscreenButton);
 div.appendChild(canvas);
 
 initializeBabylonApp({ canvas: canvas });
