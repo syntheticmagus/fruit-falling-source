@@ -154,29 +154,16 @@ export class GameScene extends Scene {
             light.direction.z += 5;
             light.direction.normalize();
         }
-        const redLight = new SpotLight("redLight", new Vector3(-3, 3, -5), Vector3.Down(), Math.PI, 1, this);
-        redLight.diffuse = new Color3(1.0, 0.3, 0.3);
-        const greenLight = new SpotLight("greenLight", new Vector3(0, 3, -5), Vector3.Down(), Math.PI, 1, this);
-        greenLight.diffuse = new Color3(0.3, 1.0, 0.3);
-        const blueLight = new SpotLight("blueLight", new Vector3(3, 3, -5), Vector3.Down(), Math.PI, 1, this);
-        blueLight.diffuse = new Color3(0.3, 0.3, 1.0);
+        const light = new SpotLight("light", new Vector3(-3, 3, -5), Vector3.Down(), Math.PI, 1, this);
+        light.diffuse = new Color3(1.0, 1.0, 1.0);
         
         const TIME_SCALE = 1;
         let t = 0;
         while (this._state === GameSceneState.Raining) { 
             t += (TIME_SCALE / (60 * this.getAnimationRatio()));
-            redLight.position.x = 3 * Math.sin(t);
-            greenLight.position.x = 3 * Math.cos(t);
-            blueLight.position.x = 3 * Math.sin(-1.5 * t);
-
-            redLight.position.y = 3 * Math.sin(-t) + 1;
-            greenLight.position.y = 3 * Math.sin(1.5 * t) + 1;
-            blueLight.position.y = 3 * Math.cos(-0.8 * t) + 1;
-
-            setLightDirection(redLight);
-            setLightDirection(greenLight);
-            setLightDirection(blueLight);
-
+            light.position.x = 3 * Math.sin(t);
+            light.position.y = 3 * Math.sin(-t) + 1;
+            setLightDirection(light);
             yield;
         }
     }
