@@ -1,6 +1,5 @@
 import { Engine } from "@babylonjs/core";
 import { GameScene } from "./gameScene";
-import { CreatePlaygroundScene } from "./Playground/playground";
 
 export interface InitializeBabylonAppOptions {
     canvas: HTMLCanvasElement;

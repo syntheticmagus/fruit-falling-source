@@ -1,10 +1,23 @@
-import { AbstractMesh, MeshBuilder, Scene, TransformNode } from "@babylonjs/core";
-import { GameScene, GameSceneState } from "./gameScene";
+import { AbstractMesh, MeshBuilder, Observable, Scene, TransformNode } from "@babylonjs/core";
+import { GameButtonColors, GameScene, GameSceneState } from "./gameScene";
 
 export class Drop extends TransformNode {
     private _gameScene: GameScene;
     private _mesh: AbstractMesh;
     private _falling: boolean;
+    private _color?: GameButtonColors;
+    private _caught = false;
+
+    public onFinishedFallingObservable: Observable<void>;
+
+    public get Color() {
+        return this._color;
+    }
+
+    public set Caught(value: boolean) {
+        this.position.y = -1;
+        this._caught = value;
+    }
 
     constructor (scene: GameScene) {
         super("drop", scene);
@@ -16,6 +29,8 @@ export class Drop extends TransformNode {
         this._mesh.isVisible = false;
 
         this._falling = false;
+
+        this.onFinishedFallingObservable = new Observable<void>();
     }
 
     public async fallAsync(): Promise<boolean> { 
@@ -34,7 +49,8 @@ export class Drop extends TransformNode {
     }
 
     private *fallCoroutine() {
-        this._mesh.material = this._gameScene.dropMaterials[Math.floor(Math.random() * this._gameScene.dropMaterials.length)];
+        this._color = Math.floor(Math.random() * this._gameScene.dropMaterials.length);
+        this._mesh.material = this._gameScene.dropMaterials[this._color!];
         this._mesh.isVisible = true;
 
         const FALL_SPEED = 0.005;
@@ -49,6 +65,12 @@ export class Drop extends TransformNode {
             yield;
         }
 
+        if (!this._caught) {
+            this.onFinishedFallingObservable.notifyObservers();
+        }
+        this._caught = false;
+
+        this._color = undefined;
         this._mesh.isVisible = false;
     }
 }

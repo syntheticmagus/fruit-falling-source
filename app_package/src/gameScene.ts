@@ -9,10 +9,20 @@ export enum GameSceneState {
     Ending
 };
 
+export enum GameButtonColors {
+    Red = 0,
+    Orange = 1,
+    Yellow = 2,
+    Green = 3,
+    Blue = 4,
+    Purple = 5
+}
+
 export class GameScene extends Scene {
     private _state: GameSceneState;
     private _camera: OrthoCamera;
     private _buttons: Array<RainbowButton>;
+    private _drops: Set<Drop>;
 
     public guiTexture: AdvancedDynamicTexture;
     public dropMaterials: Array<Material>;
@@ -38,7 +48,11 @@ export class GameScene extends Scene {
         ];
         this._buttons = new Array<RainbowButton>(colors.length);
         for (let idx = 0; idx < colors.length; ++idx) {
-            this._buttons[idx] = new RainbowButton(this, colors[idx], 0.12 * (idx + 1));
+            const height = 0.12 * (idx + 1);
+            this._buttons[idx] = new RainbowButton(this, colors[idx], height);
+            this._buttons[idx].onClickedObservable.add(() => {
+                this._handleButtonPressed(height, idx);
+            });
         }
 
         this.dropMaterials = new Array<Material>(colors.length);
@@ -49,6 +63,8 @@ export class GameScene extends Scene {
             this.dropMaterials[idx] = mat;
         }
 
+        this._drops = new Set<Drop>();
+
         this.onBeforeRenderObservable.runCoroutineAsync(this._runLightSystem());
         this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine());
     }
@@ -56,8 +72,10 @@ export class GameScene extends Scene {
     private *_rainDropsCoroutine() {
         while (this._state === GameSceneState.Raining) {
             const drop = new Drop(this);
+            this._drops.add(drop);
             drop.fallAsync().then(() => {
                 // TODO: Pool these instead of disposing them.
+                this._drops.delete(drop);
                 drop.dispose();
             });
             yield Tools.DelayAsync(1000);
@@ -96,5 +114,13 @@ export class GameScene extends Scene {
 
             yield;
         }
+    }
+
+    private _handleButtonPressed(height: number, color: GameButtonColors) {
+        this._drops.forEach((drop) => {
+            if (Math.abs(drop.position.y - height) < 0.05 && color === drop.Color) {
+                drop.Caught = true;
+            }
+        });
     }
 }

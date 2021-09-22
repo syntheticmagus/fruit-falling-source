@@ -1,4 +1,4 @@
-import { AbstractMesh, Color3, MeshBuilder, StandardMaterial, Tools, TransformNode } from "@babylonjs/core";
+import { AbstractMesh, Color3, MeshBuilder, Observable, StandardMaterial, Tools, TransformNode } from "@babylonjs/core";
 import { Button } from "@babylonjs/gui";
 import { GameScene, GameSceneState } from "./gameScene";
 
@@ -7,6 +7,8 @@ export class RainbowButton extends TransformNode {
     private _material: StandardMaterial;
     private _mesh: AbstractMesh;
     private _button: Button;
+    
+    public onClickedObservable: Observable<void>;
 
     constructor (scene: GameScene, color: Color3, height: number) {
         super("rainbowButton", scene);
@@ -27,8 +29,11 @@ export class RainbowButton extends TransformNode {
         this._gameScene.guiTexture.addControl(this._button);
         this._button.linkWithMesh(this._mesh);
 
+        this.onClickedObservable = new Observable<void>();
+
         this._button.onPointerDownObservable.add(() => {
             this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this.spinAnimationCoroutine());
+            this.onClickedObservable.notifyObservers();
         });
     }
 
