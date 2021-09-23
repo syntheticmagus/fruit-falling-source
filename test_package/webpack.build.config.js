@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { DefinePlugin } = require("webpack");
 
 module.exports = {
     entry: "./src/index.js",
@@ -13,6 +14,9 @@ module.exports = {
         filename: "bundle.js"
     },
     plugins: [
+        new DefinePlugin({
+            DEV_BUILD: JSON.stringify(false)
+        }),
         new HtmlWebpackPlugin({ title: "Babylon.js Proving Ground" })
     ],
     module: {

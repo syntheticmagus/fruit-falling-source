@@ -1,5 +1,11 @@
 import { initializeBabylonApp } from "app_package";
 
+if (DEV_BUILD) {
+    console.log("Dev!");
+} else {
+    console.log("Not dev!");
+}
+
 document.body.style.width = "100%";
 document.body.style.height = "100%";
 document.body.style.margin = "0";

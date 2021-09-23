@@ -23,4 +23,3 @@ export function initializeBabylonApp(options: InitializeBabylonAppOptions) {
         engine.resize();
     });
 }
-
