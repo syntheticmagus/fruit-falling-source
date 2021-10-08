@@ -126,6 +126,27 @@ export class GameScene extends Scene {
     }
 
     private *_rainDropsCoroutine() {
+        const countdownTextBlock = new TextBlock("countdown");
+        countdownTextBlock.color = "#FF0000FF";
+        countdownTextBlock.fontStyle = "bold";
+        countdownTextBlock.fontFamily = "Courier";
+        countdownTextBlock.fontSize = "64";
+        countdownTextBlock.resizeToFit = true;
+        countdownTextBlock.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_CENTER;
+        countdownTextBlock.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
+        this.guiTexture.addControl(countdownTextBlock);
+        countdownTextBlock.text = "3";
+        yield Tools.DelayAsync(1000);
+        countdownTextBlock.text = "2";
+        yield Tools.DelayAsync(1000);
+        countdownTextBlock.text = "1";
+        yield Tools.DelayAsync(1000);
+        countdownTextBlock.text = "Go!";
+        Tools.DelayAsync(1000).then(() => {
+            this.guiTexture.removeControl(countdownTextBlock);
+            countdownTextBlock.dispose();
+        });
+
         while (this._state === GameSceneState.Raining) {
             let drop: Drop;
             if (this._inactiveDrops.size > 0) {

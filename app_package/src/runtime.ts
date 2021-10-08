@@ -1,5 +1,6 @@
-import { Engine } from "@babylonjs/core";
+import { Engine, Scene } from "@babylonjs/core";
 import { GameScene } from "./gameScene";
+import { TitleScene } from "./titleScene";
 
 export interface InitializeBabylonAppOptions {
     canvas: HTMLCanvasElement;
@@ -9,13 +10,13 @@ export interface InitializeBabylonAppOptions {
 export function initializeBabylonApp(options: InitializeBabylonAppOptions) {
     const canvas = options.canvas;
     const engine = new Engine(canvas);
-    let scene = new GameScene(engine);
-    const gameEndedHandler = () => {
+    let scene: Scene = new TitleScene(engine);
+    const gameRestartHandler = () => {
         scene.dispose();
         scene = new GameScene(engine);
-        scene.gameEndedObservable.add(gameEndedHandler);
+        (scene as GameScene).gameEndedObservable.add(gameRestartHandler);
     };
-    scene.gameEndedObservable.add(gameEndedHandler);
+    (scene as TitleScene).gameStartedObservable.add(gameRestartHandler);
     engine.runRenderLoop(() => {
         scene.render();
     });
