@@ -103,7 +103,6 @@ export class GameScene extends Scene {
         this._livesText.resizeToFit = true;
         this._livesText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
         this._livesText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_RIGHT;
-        this.guiTexture.addControl(this._livesText);
 
         this.failures = 0;
 
@@ -116,7 +115,6 @@ export class GameScene extends Scene {
         this._scoreText.resizeToFit = true;
         this._scoreText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
         this._scoreText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_LEFT;
-        this.guiTexture.addControl(this._scoreText);
         this.score = 0;
 
         this.gameEndedObservable = new Observable<void>();
@@ -146,6 +144,11 @@ export class GameScene extends Scene {
             this.guiTexture.removeControl(countdownTextBlock);
             countdownTextBlock.dispose();
         });
+        
+        this.guiTexture.addControl(this._livesText);        
+        this.guiTexture.addControl(this._scoreText);
+        
+        yield Tools.DelayAsync(500);
 
         while (this._state === GameSceneState.Raining) {
             let drop: Drop;
