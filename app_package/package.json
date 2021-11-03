@@ -1,7 +1,7 @@
 {
-  "name": "app_package",
-  "version": "1.0.0",
-  "description": "",
+  "name": "rainbow-drop",
+  "version": "0.0.1",
+  "description": "Simple test case for the Babylon.js Golden Path",
   "main": "lib/index.js",
   "types": "lib",
   "scripts": {
