@@ -75,10 +75,11 @@ export class GameScene extends Scene {
             new Color3(1.0, 0.0, 1.0)
         ];
         this._buttons = new Array<RainbowButton>(colors.length);
-        const spriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_frame.png", 6, {width: 700, height: 180}, this);
+        const frameSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_frame.png", 6, {width: 700, height: 180}, this);
+        const faceSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_mouth.png", 6, {width: 456, height: 171}, this);
         for (let idx = 0; idx < colors.length; ++idx) {
             const height = 0.12 * (idx + 1);
-            this._buttons[idx] = new RainbowButton(this, spriteManager, colors[idx], height);
+            this._buttons[idx] = new RainbowButton(this, frameSpriteManager, faceSpriteManager, colors[idx], height);
             this._buttons[idx].onClickedObservable.add(() => {
                 this._handleButtonPressed(height, idx);
             });

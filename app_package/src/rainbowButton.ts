@@ -1,24 +1,25 @@
-import { AbstractMesh, Color3, MeshBuilder, Observable, PBRMaterial, Sprite, SpriteManager, StandardMaterial, Tools, TransformNode } from "@babylonjs/core";
+import { AbstractMesh, Color3, MeshBuilder, Observable, PBRMaterial, Sprite, SpriteManager, TransformNode } from "@babylonjs/core";
 import { Button } from "@babylonjs/gui";
-import { GameScene, GameSceneState } from "./gameScene";
+import { GameScene } from "./gameScene";
 
 export class RainbowButton extends TransformNode {
     private _gameScene: GameScene;
     private _material: PBRMaterial;
-    private _sprite: Sprite;
+    private _frameSprite: Sprite;
+    private _faceSprite: Sprite;
     private _background: AbstractMesh;
     private _button: Button;
     
     public onClickedObservable: Observable<void>;
 
-    constructor (scene: GameScene, spriteManager: SpriteManager, color: Color3, height: number) {
+    constructor (scene: GameScene, frameSpriteManager: SpriteManager, faceSpriteManager: SpriteManager, color: Color3, height: number) {
         super("rainbowButton", scene);
         this._gameScene = scene;
 
-        this._sprite = new Sprite("", spriteManager);
-        this._sprite.width = 0.13 * 7 / 2;
-        this._sprite.height = 0.13;
-        this._sprite.position.y = height;
+        this._frameSprite = new Sprite("", frameSpriteManager);
+        this._frameSprite.width = 0.13 * 7 / 2;
+        this._frameSprite.height = 0.13;
+        this._frameSprite.position.y = height;
 
         this._background = MeshBuilder.CreatePlane("", {width: 0.13 * 6.42 / 2, height: 0.13 * 1.57 / 2}, scene);
         this._background.position.x = 0.13 * -0.064 / 2;
@@ -28,6 +29,11 @@ export class RainbowButton extends TransformNode {
         this._material.unlit = true;
         this._material.albedoColor = color;
         this._background.material = this._material;
+
+        this._faceSprite = new Sprite("", faceSpriteManager);
+        this._faceSprite.width = 0.1 * 7 / 2;
+        this._faceSprite.height = 0.1;
+        this._faceSprite.position.y = height;
 
         this._button = Button.CreateSimpleButton("rainbowButton_button", "");
         this._button.widthInPixels = this._gameScene.getEngine().getRenderWidth() * 0.8;
@@ -42,31 +48,32 @@ export class RainbowButton extends TransformNode {
             this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._onClickCoroutine());
             this.onClickedObservable.notifyObservers();
         });
-        this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._randomAnimation());
+        this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._randomFrameAnimation());
+        this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._faceAnimation());
     }
 
     private *_onClickCoroutine() {
         const SCALE = 0.95;
-        this._sprite.width *= SCALE;
-        this._sprite.height *= SCALE;
+        this._frameSprite.width *= SCALE;
+        this._frameSprite.height *= SCALE;
         this._background.scaling.scaleInPlace(SCALE);
 
         yield;
         yield;
         yield;
         
-        this._sprite.width *= 1 / SCALE;
-        this._sprite.height *= 1 / SCALE;
+        this._frameSprite.width *= 1 / SCALE;
+        this._frameSprite.height *= 1 / SCALE;
         this._background.scaling.scaleInPlace(1 / SCALE)
     }
 
-    private *_randomAnimation() {
+    private *_randomFrameAnimation() {
         const THRESHOLD = 0.5;
         let rand = 0;
         while (true) {
             rand = Math.random();
             if (rand < THRESHOLD) {
-                this._sprite.cellIndex = Math.floor(5 * rand / THRESHOLD);
+                this._frameSprite.cellIndex = Math.floor(5 * rand / THRESHOLD);
                 yield;
                 yield;
                 yield;
@@ -76,6 +83,52 @@ export class RainbowButton extends TransformNode {
                 yield;
                 yield;
             }
+            yield;
+        }
+    }
+
+    private *_faceAnimation() {
+        // const FULL_FRAMES = [0, 4, 8, 12, 16, 1, 5, 9, 13, 17, 20, 21, 24, 25, 28, 29, 2, 6, 10, 14, 18, 22, 26, 30, 32, 33, 34, 36, 37, 38, 3, 7, 11, 15, 19, 23, 27, 31];
+        const GRIN_FRAMES = [0, 4, 8, 21, 22, 27, 31, 37, 38];
+        const GRIN_TO_STRAIGHT_FRAMES = [12, 16];
+        const STRAIGHT_FRAMES = [1, 5, 9, 13];
+        const STRAIGHT_TO_GRIN_FRAMES = [17, 20];
+        const CHOMP_FRAMES = [24, 25, 28, 29, 2, 6, 10, 14, 18];
+        const GRIN_TO_SMILE_FRAMES = [26, 30];
+        const SMILE_FRAMES = [32, 33, 34];
+        const SMILE_TO_GRIN_FRAMES = [36];
+        const GRIN_TO_BLEH_FRAMES = [3, 7];
+        const BLEH_FRAMES = [11, 15];
+        const BLEH_TO_GRIN_FRAMES = [19, 23];
+
+        const FRAMES = GRIN_FRAMES.concat(
+            GRIN_TO_STRAIGHT_FRAMES,
+            STRAIGHT_FRAMES,
+            STRAIGHT_FRAMES,
+            STRAIGHT_TO_GRIN_FRAMES,
+            GRIN_FRAMES,
+            CHOMP_FRAMES,
+            GRIN_TO_BLEH_FRAMES,
+            BLEH_FRAMES,
+            BLEH_FRAMES,
+            BLEH_TO_GRIN_FRAMES,
+            GRIN_FRAMES,
+            CHOMP_FRAMES,
+            GRIN_TO_SMILE_FRAMES,
+            SMILE_FRAMES,
+            SMILE_FRAMES,
+            SMILE_TO_GRIN_FRAMES
+        );
+
+        let idx = 0;
+        while (true) {
+            idx = (idx + 1) % FRAMES.length;
+            this._faceSprite.cellIndex = FRAMES[idx];
+            yield;
+            yield;
+            yield;
+            yield;
+            yield;
             yield;
         }
     }
