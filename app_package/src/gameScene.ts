@@ -1,4 +1,4 @@
-import { Color3, Color4, Engine, Material, Observable, Scene, SpotLight, StandardMaterial, Tools, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, Engine, Material, Observable, Scene, SpotLight, SpriteManager, StandardMaterial, Tools, Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Container, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
 import { OrthoCamera } from "./orthoCamera";
@@ -63,7 +63,7 @@ export class GameScene extends Scene {
         super(engine);
         this._state = GameSceneState.Raining;
         this._camera = new OrthoCamera(this);
-        this.clearColor = new Color4(0, 0, 0, 1);
+        this.clearColor = new Color4(1, 1, 1, 1);
         this.guiTexture = AdvancedDynamicTexture.CreateFullscreenUI("gui", true, this);
 
         const colors = [
@@ -75,9 +75,10 @@ export class GameScene extends Scene {
             new Color3(1.0, 0.0, 1.0)
         ];
         this._buttons = new Array<RainbowButton>(colors.length);
+        const spriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_frame.png", 6, {width: 700, height: 180}, this);
         for (let idx = 0; idx < colors.length; ++idx) {
             const height = 0.12 * (idx + 1);
-            this._buttons[idx] = new RainbowButton(this, colors[idx], height);
+            this._buttons[idx] = new RainbowButton(this, spriteManager, colors[idx], height);
             this._buttons[idx].onClickedObservable.add(() => {
                 this._handleButtonPressed(height, idx);
             });
