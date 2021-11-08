@@ -1,4 +1,4 @@
-import { Color3, Color4, Engine, Material, Observable, Scene, SpotLight, SpriteManager, StandardMaterial, Tools, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, Engine, Material, Observable, Scene, SpotLight, Sprite, SpriteManager, StandardMaterial, Tools, Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Container, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
 import { OrthoCamera } from "./orthoCamera";
@@ -77,6 +77,11 @@ export class GameScene extends Scene {
         this._buttons = new Array<RainbowButton>(colors.length);
         const frameSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_frame.png", 6, {width: 700, height: 180}, this);
         const faceSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_mouth.png", 6, {width: 456, height: 171}, this);
+
+        //const fruit = new Sprite("", fruitSpriteManager); fruit.width = 0.12; fruit.height = 0.15; fruit.position.y = 0.2; fruit.position.z = -0.2; fruit.cellIndex = 5;
+        //const animateFruitCoroutine = function* () { while (true) { fruit.cellIndex = (fruit.cellIndex + 6) % 24; yield; yield; yield; yield; yield; yield; yield; yield; } };
+        //this.onBeforeRenderObservable.runCoroutineAsync(animateFruitCoroutine());
+
         for (let idx = 0; idx < colors.length; ++idx) {
             const height = 0.12 * (idx + 1);
             this._buttons[idx] = new RainbowButton(this, frameSpriteManager, faceSpriteManager, colors[idx], height);
@@ -126,6 +131,8 @@ export class GameScene extends Scene {
     }
 
     private *_rainDropsCoroutine() {
+        const fruitSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_fruit.png", 15, {width: 120, height: 160}, this);
+
         const countdownTextBlock = new TextBlock("countdown");
         countdownTextBlock.color = "#FF0000FF";
         countdownTextBlock.fontStyle = "bold";
@@ -159,7 +166,7 @@ export class GameScene extends Scene {
                 this._inactiveDrops.delete(drop);
                 this._activeDrops.add(drop);
             } else {
-                drop = new Drop(this);
+                drop = new Drop(this, fruitSpriteManager);
                 drop.onFinishedFallingObservable.add(() => {
                     this.failures += 1;
                 });
