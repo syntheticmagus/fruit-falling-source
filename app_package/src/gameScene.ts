@@ -200,11 +200,16 @@ export class GameScene extends Scene {
                 drop.Caught = true;
                 if (color === drop.Color) {
                     this.score += 1;
+                    this._buttons[color].chompAndSmile();
+                    return;
                 } else {
                     this.failures += 1;
+                    this._buttons[color].chompAndBleh();
+                    return;
                 }
             }
         });
+        this._buttons[color].chomp();
     }
 
     private _endGame() {

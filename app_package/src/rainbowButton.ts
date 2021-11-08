@@ -9,6 +9,9 @@ export class RainbowButton extends TransformNode {
     private _faceSprite: Sprite;
     private _background: AbstractMesh;
     private _button: Button;
+    private _chompRequested: boolean = false;
+    private _chompAndSmileRequested: boolean = false;
+    private _chompAndBlehRequested: boolean = false;
     
     public onClickedObservable: Observable<void>;
 
@@ -52,8 +55,20 @@ export class RainbowButton extends TransformNode {
         this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._faceAnimation());
     }
 
+    public chomp() {
+        this._chompRequested = true;
+    }
+
+    public chompAndSmile() {
+        this._chompAndSmileRequested = true;
+    }
+
+    public chompAndBleh() {
+        this._chompAndBlehRequested = true;
+    }
+
     private *_onClickCoroutine() {
-        const SCALE = 0.95;
+        const SCALE = 0.96;
         this._frameSprite.width *= SCALE;
         this._frameSprite.height *= SCALE;
         this._background.scaling.scaleInPlace(SCALE);
@@ -93,7 +108,7 @@ export class RainbowButton extends TransformNode {
         const GRIN_TO_STRAIGHT_FRAMES = [12, 16];
         const STRAIGHT_FRAMES = [1, 5, 9, 13];
         const STRAIGHT_TO_GRIN_FRAMES = [17, 20];
-        const CHOMP_FRAMES = [24, 25, 28, 29, 2, 6, 10, 14, 18];
+        const CHOMP_FRAMES = [/*24, */25, 28, 29, 2, 6, 10, 14, 18];
         const GRIN_TO_SMILE_FRAMES = [26, 30];
         const SMILE_FRAMES = [32, 33, 34];
         const SMILE_TO_GRIN_FRAMES = [36];
@@ -135,19 +150,21 @@ export class RainbowButton extends TransformNode {
         ];
         let animation = 0;
         let frameIdx = Math.floor(Math.random() * GRIN_ANIMATION.length);
-        
-        let chompAndSmile = false;
-        let chompAndBleh = false;
 
         while (true) {
-            chompAndBleh = Math.random() < 0.01;
-            if (chompAndSmile) {
+            if (this._chompAndSmileRequested) {
                 animation = 3;
                 frameIdx = 0;
-            } else if (chompAndBleh) {
+            } else if (this._chompAndBlehRequested) {
                 animation = 4;
                 frameIdx = 0;
+            } else if (this._chompRequested) {
+                animation = 2;
+                frameIdx = 0;
             }
+            this._chompAndSmileRequested = false;
+            this._chompAndBlehRequested = false;
+            this._chompRequested = false;
 
             if (frameIdx >= ANIMATIONS[animation].length) {
                 if (animation === 0) {
@@ -162,12 +179,9 @@ export class RainbowButton extends TransformNode {
             this._faceSprite.cellIndex = ANIMATIONS[animation][frameIdx];
             frameIdx += 1;
 
-            yield;
-            yield;
-            yield;
-            yield;
-            yield;
-            yield;
+            for (let idx = 0; !this._chompAndSmileRequested && !this._chompAndBlehRequested && !this._chompRequested && idx < 5; ++idx) {
+                yield;
+            }
         }
     }
 }

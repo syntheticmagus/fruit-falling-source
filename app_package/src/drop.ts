@@ -38,7 +38,7 @@ export class Drop extends TransformNode {
             return false;
         }
 
-        this.position.x = 0.3 * (Math.random() - 0.5);
+        this.position.x = 0.15 * (Math.random() - 0.5);
         this.position.y = 1.05;
         this.position.z = -1;
 
