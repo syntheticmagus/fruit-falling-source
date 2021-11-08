@@ -100,30 +100,68 @@ export class RainbowButton extends TransformNode {
         const GRIN_TO_BLEH_FRAMES = [3, 7];
         const BLEH_FRAMES = [11, 15];
         const BLEH_TO_GRIN_FRAMES = [19, 23];
-
-        const FRAMES = GRIN_FRAMES.concat(
+        
+        const GRIN_ANIMATION = GRIN_FRAMES;
+        const STRAIGHT_FACE_ANIMATION = new Array<number>().concat(
             GRIN_TO_STRAIGHT_FRAMES,
             STRAIGHT_FRAMES,
             STRAIGHT_FRAMES,
-            STRAIGHT_TO_GRIN_FRAMES,
-            GRIN_FRAMES,
-            CHOMP_FRAMES,
-            GRIN_TO_BLEH_FRAMES,
-            BLEH_FRAMES,
-            BLEH_FRAMES,
-            BLEH_TO_GRIN_FRAMES,
-            GRIN_FRAMES,
+            STRAIGHT_FRAMES,
+            STRAIGHT_FRAMES,
+            STRAIGHT_TO_GRIN_FRAMES
+        );
+        const CHOMP_ANIMATION = CHOMP_FRAMES;
+        const CHOMP_AND_SMILE_ANIMATION = new Array<number>().concat(
             CHOMP_FRAMES,
             GRIN_TO_SMILE_FRAMES,
             SMILE_FRAMES,
             SMILE_FRAMES,
             SMILE_TO_GRIN_FRAMES
         );
+        const CHOMP_AND_BLEH_ANIMATION = new Array<number>().concat(
+            CHOMP_FRAMES,
+            GRIN_TO_BLEH_FRAMES,
+            BLEH_FRAMES,
+            BLEH_FRAMES,
+            BLEH_TO_GRIN_FRAMES
+        );
 
-        let idx = 0;
+        const ANIMATIONS = [
+            GRIN_ANIMATION,
+            STRAIGHT_FACE_ANIMATION,
+            CHOMP_ANIMATION,
+            CHOMP_AND_SMILE_ANIMATION,
+            CHOMP_AND_BLEH_ANIMATION
+        ];
+        let animation = 0;
+        let frameIdx = Math.floor(Math.random() * GRIN_ANIMATION.length);
+        
+        let chompAndSmile = false;
+        let chompAndBleh = false;
+
         while (true) {
-            idx = (idx + 1) % FRAMES.length;
-            this._faceSprite.cellIndex = FRAMES[idx];
+            chompAndBleh = Math.random() < 0.01;
+            if (chompAndSmile) {
+                animation = 3;
+                frameIdx = 0;
+            } else if (chompAndBleh) {
+                animation = 4;
+                frameIdx = 0;
+            }
+
+            if (frameIdx >= ANIMATIONS[animation].length) {
+                if (animation === 0) {
+                    animation = Math.random() > 0.1 ? 0 : 1;
+                } else {
+                    animation = 0;
+                }
+                
+                frameIdx = 0;
+            }
+
+            this._faceSprite.cellIndex = ANIMATIONS[animation][frameIdx];
+            frameIdx += 1;
+
             yield;
             yield;
             yield;
