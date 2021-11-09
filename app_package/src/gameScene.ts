@@ -1,5 +1,5 @@
-import { Color3, Color4, Engine, Material, Observable, Scene, SpotLight, Sprite, SpriteManager, StandardMaterial, Tools, Vector3 } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Button, Container, StackPanel, TextBlock } from "@babylonjs/gui";
+import { Color3, Color4, Engine, Material, MeshBuilder, Observable, PBRMaterial, Scene, SpotLight, Sprite, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
+import { AdvancedDynamicTexture, Button, Container, Grid, Image, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
 import { OrthoCamera } from "./orthoCamera";
 import { RainbowButton } from "./rainbowButton";
@@ -63,24 +63,38 @@ export class GameScene extends Scene {
         super(engine);
         this._state = GameSceneState.Raining;
         this._camera = new OrthoCamera(this);
-        this.clearColor = new Color4(1, 1, 1, 1);
+        this.clearColor = new Color4(0, 0, 0, 1);
         this.guiTexture = AdvancedDynamicTexture.CreateFullscreenUI("gui", true, this);
+
+        const grid = new Grid("grid");
+        grid.addColumnDefinition(0.5);
+        grid.addColumnDefinition(320, true);
+        grid.addColumnDefinition(0.5);
+        grid.addRowDefinition(0.12);
+        grid.addRowDefinition(0.88);
+        this.guiTexture.addControl(grid);
+
+        const backgroundTexture = new Texture("http://127.0.0.1:8181/fruit_falling_game.png", this, true);
+        const background = MeshBuilder.CreatePlane("", {width: 9 / 16, height: 1}, this);
+        const backgroundMaterial = new PBRMaterial("background_material", this);
+        backgroundMaterial.unlit = true;
+        backgroundMaterial.albedoTexture = backgroundTexture;
+        background.material = backgroundMaterial;
+        background.position.y = 0.5;
+        background.position.z = 1;
 
         const colors = [
             new Color3(1.0, 0.0, 0.0),
-            new Color3(1.0, 0.5, 0.0),
+            new Color3(1.0, 0.3, 0.0),
             new Color3(1.0, 1.0, 0.0),
-            new Color3(0.0, 1.0, 0.0),
+            new Color3(0.1, 0.75, 0.0),
             new Color3(0.0, 0.0, 1.0),
             new Color3(1.0, 0.0, 1.0)
         ];
         this._buttons = new Array<RainbowButton>(colors.length);
         const frameSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_frame.png", 6, {width: 700, height: 180}, this);
         const faceSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_mouth.png", 6, {width: 456, height: 171}, this);
-
-        //const fruit = new Sprite("", fruitSpriteManager); fruit.width = 0.12; fruit.height = 0.15; fruit.position.y = 0.2; fruit.position.z = -0.2; fruit.cellIndex = 5;
-        //const animateFruitCoroutine = function* () { while (true) { fruit.cellIndex = (fruit.cellIndex + 6) % 24; yield; yield; yield; yield; yield; yield; yield; yield; } };
-        //this.onBeforeRenderObservable.runCoroutineAsync(animateFruitCoroutine());
+        const fruitSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_fruit.png", 15, {width: 120, height: 160}, this);
 
         for (let idx = 0; idx < colors.length; ++idx) {
             const height = 0.12 * (idx + 1);
@@ -103,41 +117,50 @@ export class GameScene extends Scene {
         this._failures = 0;
 
         this._livesText = new TextBlock("lives", "");
-        this._livesText.color = "#FF0000FF";
+        this._livesText.color = "#FF8888FF";
         this._livesText.fontStyle = "bold";
         this._livesText.fontFamily = "Courier";
         this._livesText.fontSize = "30";
         this._livesText.resizeToFit = true;
+        this._livesText.outlineColor = "#000000FF";
+        this._livesText.outlineWidth = 6;
         this._livesText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
         this._livesText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_RIGHT;
+        this._livesText.isVisible = false;
+        grid.addControl(this._livesText, 1, 1);
 
         this.failures = 0;
 
         this._score = 0;
         this._scoreText = new TextBlock("score", "");
-        this._scoreText.color = "#0000FFFF";
+        this._scoreText.color = "#FFFFFFFF";
         this._scoreText.fontStyle = "bold";
         this._scoreText.fontFamily = "Courier";
         this._scoreText.fontSize = "30";
         this._scoreText.resizeToFit = true;
+        this._scoreText.outlineColor = "#000000FF";
+        this._scoreText.outlineWidth = 6;
         this._scoreText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
         this._scoreText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_LEFT;
+        this._scoreText.isVisible = false;
+        grid.addControl(this._scoreText, 1, 1);
         this.score = 0;
 
         this.gameEndedObservable = new Observable<void>();
 
         this.onBeforeRenderObservable.runCoroutineAsync(this._runLightSystem());
-        this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine());
+        this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine(fruitSpriteManager));
     }
 
-    private *_rainDropsCoroutine() {
-        const fruitSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_fruit.png", 15, {width: 120, height: 160}, this);
+    private *_rainDropsCoroutine(fruitSpriteManager: SpriteManager) {
 
         const countdownTextBlock = new TextBlock("countdown");
-        countdownTextBlock.color = "#FF0000FF";
+        countdownTextBlock.color = "#FFFFFFFF";
         countdownTextBlock.fontStyle = "bold";
         countdownTextBlock.fontFamily = "Courier";
         countdownTextBlock.fontSize = "64";
+        countdownTextBlock.outlineColor = "#000000FF";
+        countdownTextBlock.outlineWidth = 6;
         countdownTextBlock.resizeToFit = true;
         countdownTextBlock.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_CENTER;
         countdownTextBlock.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
@@ -154,9 +177,9 @@ export class GameScene extends Scene {
             countdownTextBlock.dispose();
         });
         
-        this.guiTexture.addControl(this._livesText);        
-        this.guiTexture.addControl(this._scoreText);
-        
+        this._livesText.isVisible = true;
+        this._scoreText.isVisible = true;
+
         yield Tools.DelayAsync(500);
 
         while (this._state === GameSceneState.Raining) {
@@ -226,43 +249,61 @@ export class GameScene extends Scene {
 
         this.guiTexture = AdvancedDynamicTexture.CreateFullscreenUI("gui", true, this);
 
-        const modalContainer = new Container("modal");
-        modalContainer.background = "#FFFFFFA0";
-        modalContainer.width = "100%";
-        modalContainer.height = "100%";
-        this.guiTexture.addControl(modalContainer);
+        const outerGrid = new Grid("grid");
+        outerGrid.addColumnDefinition(1);
+        outerGrid.addRowDefinition(0.55);
+        outerGrid.addRowDefinition(0.35);
+        outerGrid.addRowDefinition(0.1);
+        outerGrid.background = "#CC7733A0";
+        this.guiTexture.addControl(outerGrid);
 
-        const stackPanel = new StackPanel("endUIStack");
-        this.guiTexture.addControl(stackPanel);
+        const gameOverContainer = new Container("gameOver");
+        gameOverContainer.width = "300px";
+        gameOverContainer.height = "150px";
+        outerGrid.addControl(gameOverContainer, 0, 0);
         
-        const gameOverTextBlock = new TextBlock("gameOver", "Game Over");
-        gameOverTextBlock.color = "#FF0000FF";
-        gameOverTextBlock.fontStyle = "bold";
-        gameOverTextBlock.fontFamily = "Courier";
-        gameOverTextBlock.fontSize = "48";
-        gameOverTextBlock.resizeToFit = true;
-        stackPanel.addControl(gameOverTextBlock);
+        const gameOverImage = new Image("gameOver", "http://127.0.0.1:8181/fruit_falling_game_over.png")
+        gameOverContainer.addControl(gameOverImage);
+
+        const gameOverGrid = new Grid("gameOverGrid");
+        gameOverGrid.addColumnDefinition(1);
+        gameOverGrid.addRowDefinition(0.5);
+        gameOverGrid.addRowDefinition(0.5);
+        gameOverContainer.addControl(gameOverGrid);
 
         const finalScoreTextBlock = new TextBlock("finalScore", "Your Score: " + this.score);
-        finalScoreTextBlock.color = "#0000FFFF";
+        finalScoreTextBlock.color = "#FFFFFFFF";
         finalScoreTextBlock.fontStyle = "bold";
         finalScoreTextBlock.fontFamily = "Courier";
         finalScoreTextBlock.fontSize = "24";
-        finalScoreTextBlock.resizeToFit = true;
-        stackPanel.addControl(finalScoreTextBlock);
-        
-        const replayButton = Button.CreateSimpleButton("playAgain", "Play Again");
-        replayButton.width = "120px";
-        replayButton.height = "40px";
-        replayButton.background = "#00FF00FF";
-        replayButton.textBlock!.color = "#FFFFFFFF";
-        replayButton.textBlock!.fontStyle = "bold";
-        replayButton.textBlock!.fontFamily = "Courier";
-        replayButton.textBlock!.fontSize = "18";
-        replayButton.verticalAlignment = Button.VERTICAL_ALIGNMENT_BOTTOM;
-        replayButton.onPointerClickObservable.add(() => {
+        finalScoreTextBlock.outlineColor = "#000000FF";
+        finalScoreTextBlock.outlineWidth = 5;
+        finalScoreTextBlock.height = "80px";
+        finalScoreTextBlock.width = "300px";
+        gameOverGrid.addControl(finalScoreTextBlock, 1, 0);
+
+        const buttonsStackPanel = new StackPanel("stackPanel");
+        outerGrid.addControl(buttonsStackPanel, 1, 0);
+
+        const playButton = Button.CreateImageWithCenterTextButton("play", "Play Again", "http://127.0.0.1:8181/fruit_falling_button.png");
+        playButton.width = "240px";
+        playButton.height = "80px";
+        playButton.thickness = 0;
+        playButton.textBlock!.color = "#FFFFFFFF";
+        playButton.textBlock!.fontStyle = "bold";
+        playButton.textBlock!.fontFamily = "Courier";
+        playButton.textBlock!.fontSize = "22";
+        playButton.textBlock!.outlineWidth = 6;
+        playButton.textBlock!.outlineColor = "#000000FF";
+        playButton.pointerEnterAnimation = () => {
+            playButton.textBlock!.outlineColor = "#777777FF";
+        };
+        playButton.pointerOutAnimation = () => {
+            playButton.textBlock!.outlineColor = "#000000FF";
+        };
+        playButton.onPointerClickObservable.add(() => {
             this.gameEndedObservable.notifyObservers();
         });
-        this.guiTexture.addControl(replayButton);
+        buttonsStackPanel.addControl(playButton);
     }
 }

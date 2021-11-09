@@ -51,6 +51,7 @@ export class Drop extends TransformNode {
 
     private *fallCoroutine() {
         this._color = Math.floor(Math.random() * this._gameScene.dropMaterials.length);
+        this._sprite.angle = Math.random() - 0.5;
         switch (this._color) {
             case GameButtonColors.Yellow:
                 this._sprite.cellIndex = 0;
@@ -83,6 +84,10 @@ export class Drop extends TransformNode {
             }
             ++frameIdx;
             yield;
+        }
+
+        if (this._gameScene.State === GameSceneState.Ending) {
+            return;
         }
 
         if (!this._caught) {

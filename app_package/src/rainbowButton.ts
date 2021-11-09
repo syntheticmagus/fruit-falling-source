@@ -1,6 +1,6 @@
 import { AbstractMesh, Color3, MeshBuilder, Observable, PBRMaterial, Sprite, SpriteManager, TransformNode } from "@babylonjs/core";
 import { Button } from "@babylonjs/gui";
-import { GameScene } from "./gameScene";
+import { GameScene, GameSceneState } from "./gameScene";
 
 export class RainbowButton extends TransformNode {
     private _gameScene: GameScene;
@@ -85,7 +85,7 @@ export class RainbowButton extends TransformNode {
     private *_randomFrameAnimation() {
         const THRESHOLD = 0.5;
         let rand = 0;
-        while (true) {
+        while (this._gameScene.State !== GameSceneState.Ending) {
             rand = Math.random();
             if (rand < THRESHOLD) {
                 this._frameSprite.cellIndex = Math.floor(5 * rand / THRESHOLD);
@@ -151,7 +151,7 @@ export class RainbowButton extends TransformNode {
         let animation = 0;
         let frameIdx = Math.floor(Math.random() * GRIN_ANIMATION.length);
 
-        while (true) {
+        while (this._gameScene.State !== GameSceneState.Ending) {
             if (this._chompAndSmileRequested) {
                 animation = 3;
                 frameIdx = 0;
