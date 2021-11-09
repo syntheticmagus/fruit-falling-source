@@ -1,5 +1,5 @@
 import { Color4, Engine, MeshBuilder, Observable, PBRMaterial, Scene, Texture } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Button, Container, Grid, Rectangle, StackPanel, TextBlock } from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Button, Grid, StackPanel } from "@babylonjs/gui";
 import { OrthoCamera } from "./orthoCamera";
 
 export class TitleScene extends Scene {

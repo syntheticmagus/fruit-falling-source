@@ -1,4 +1,4 @@
-import { Color3, Color4, Engine, Material, MeshBuilder, Observable, PBRMaterial, Scene, SpotLight, Sprite, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, Engine, Material, MeshBuilder, Observable, PBRMaterial, Scene, SpotLight, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Container, Grid, Image, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
 import { OrthoCamera } from "./orthoCamera";
@@ -161,7 +161,8 @@ export class GameScene extends Scene {
         countdownTextBlock.fontSize = "64";
         countdownTextBlock.outlineColor = "#000000FF";
         countdownTextBlock.outlineWidth = 6;
-        countdownTextBlock.resizeToFit = true;
+        countdownTextBlock.height = "200px";
+        countdownTextBlock.width = "200px";
         countdownTextBlock.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_CENTER;
         countdownTextBlock.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
         this.guiTexture.addControl(countdownTextBlock);
@@ -254,7 +255,7 @@ export class GameScene extends Scene {
         outerGrid.addRowDefinition(0.55);
         outerGrid.addRowDefinition(0.35);
         outerGrid.addRowDefinition(0.1);
-        outerGrid.background = "#CC7733A0";
+        outerGrid.background = "#AA7755A0";
         this.guiTexture.addControl(outerGrid);
 
         const gameOverContainer = new Container("gameOver");
