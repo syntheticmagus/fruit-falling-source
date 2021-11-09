@@ -3,6 +3,7 @@ import { AdvancedDynamicTexture, Button, Container, Grid, Image, StackPanel, Tex
 import { Drop } from "./drop";
 import { OrthoCamera } from "./orthoCamera";
 import { RainbowButton } from "./rainbowButton";
+import { ResourceManifest } from "./ResourceManifest";
 
 export enum GameSceneState {
     Raining,
@@ -28,6 +29,7 @@ export class GameScene extends Scene {
     private _score: number;
     private _livesText: TextBlock;
     private _scoreText: TextBlock;
+    private _resourceManifest: ResourceManifest;
 
     private get failures(): number {
         return this._failures;
@@ -59,8 +61,10 @@ export class GameScene extends Scene {
         return this._state;
     }
 
-    constructor (engine: Engine) {
+    constructor (engine: Engine, resourceManifest: ResourceManifest) {
         super(engine);
+        this._resourceManifest = resourceManifest;
+
         this._state = GameSceneState.Raining;
         this._camera = new OrthoCamera(this);
         this.clearColor = new Color4(0, 0, 0, 1);
@@ -74,7 +78,7 @@ export class GameScene extends Scene {
         grid.addRowDefinition(0.88);
         this.guiTexture.addControl(grid);
 
-        const backgroundTexture = new Texture("http://127.0.0.1:8181/fruit_falling_game.png", this, true);
+        const backgroundTexture = new Texture(this._resourceManifest.backgroundGameUrl, this, true);
         const background = MeshBuilder.CreatePlane("", {width: 9 / 16, height: 1}, this);
         const backgroundMaterial = new PBRMaterial("background_material", this);
         backgroundMaterial.unlit = true;
@@ -92,9 +96,9 @@ export class GameScene extends Scene {
             new Color3(1.0, 0.0, 1.0)
         ];
         this._buttons = new Array<RainbowButton>(colors.length);
-        const frameSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_frame.png", 6, {width: 700, height: 180}, this);
-        const faceSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_mouth.png", 6, {width: 456, height: 171}, this);
-        const fruitSpriteManager = new SpriteManager("", "http://127.0.0.1:8181/spritesheet_fruit.png", 15, {width: 120, height: 160}, this);
+        const frameSpriteManager = new SpriteManager("", this._resourceManifest.spritesheetButtonFrameUrl, 6, {width: 700, height: 180}, this);
+        const faceSpriteManager = new SpriteManager("", this._resourceManifest.spritesheetMouthUrl, 6, {width: 456, height: 171}, this);
+        const fruitSpriteManager = new SpriteManager("", this._resourceManifest.spritesheetFruitUrl, 15, {width: 120, height: 160}, this);
 
         for (let idx = 0; idx < colors.length; ++idx) {
             const height = 0.12 * (idx + 1);
@@ -263,7 +267,7 @@ export class GameScene extends Scene {
         gameOverContainer.height = "150px";
         outerGrid.addControl(gameOverContainer, 0, 0);
         
-        const gameOverImage = new Image("gameOver", "http://127.0.0.1:8181/fruit_falling_game_over.png")
+        const gameOverImage = new Image("gameOver", this._resourceManifest.imageGameOverUrl);
         gameOverContainer.addControl(gameOverImage);
 
         const gameOverGrid = new Grid("gameOverGrid");
@@ -286,7 +290,7 @@ export class GameScene extends Scene {
         const buttonsStackPanel = new StackPanel("stackPanel");
         outerGrid.addControl(buttonsStackPanel, 1, 0);
 
-        const playButton = Button.CreateImageWithCenterTextButton("play", "Play Again", "http://127.0.0.1:8181/fruit_falling_button.png");
+        const playButton = Button.CreateImageWithCenterTextButton("play", "Play Again", this._resourceManifest.buttonPlankUrl);
         playButton.width = "240px";
         playButton.height = "80px";
         playButton.thickness = 0;

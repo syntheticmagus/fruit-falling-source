@@ -1,9 +1,10 @@
 import { initializeBabylonApp } from "app_package";
 
+let assetHostUrl;
 if (DEV_BUILD) {
-    console.log("Dev!");
+    assetHostUrl = "http://127.0.0.1:8181/"
 } else {
-    console.log("Not dev!");
+    throw new Error("Non-dev build not implemented!");
 }
 
 document.body.style.width = "100%";
@@ -33,4 +34,13 @@ fullscreenButton.style.width = "100%";
 div.appendChild(fullscreenButton);
 div.appendChild(canvas);
 
-initializeBabylonApp({ canvas: canvas });
+initializeBabylonApp({ 
+    canvas: canvas,
+    backgroundTitleUrl: assetHostUrl + "background_title.png",
+    backgroundGameUrl: assetHostUrl + "background_game.png",
+    buttonPlankUrl: assetHostUrl + "button_plank.png",
+    imageGameOverUrl: assetHostUrl + "image_game_over.png",
+    spritesheetButtonFrameUrl: assetHostUrl + "spritesheet_button_frame.png",
+    spritesheetFruitUrl: assetHostUrl + "spritesheet_fruit.png",
+    spritesheetMouthUrl: assetHostUrl + "spritesheet_mouth.png"
+});

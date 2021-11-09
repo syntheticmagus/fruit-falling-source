@@ -1,16 +1,18 @@
 import { Color4, Engine, MeshBuilder, Observable, PBRMaterial, Scene, Texture } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Grid, StackPanel } from "@babylonjs/gui";
 import { OrthoCamera } from "./orthoCamera";
+import { ResourceManifest } from "./ResourceManifest";
 
 export class TitleScene extends Scene {
     public readonly gameStartedObservable: Observable<void> = new Observable<void>();
 
-    constructor (engine: Engine) {
+    constructor (engine: Engine, resourceManifest: ResourceManifest) {
         super(engine);
+
         new OrthoCamera(this);
         this.clearColor = new Color4(0, 0, 0, 1);
 
-        const backgroundTexture = new Texture("http://127.0.0.1:8181/fruit_falling_title.png", this, true);
+        const backgroundTexture = new Texture(resourceManifest.backgroundTitleUrl, this, true);
         const background = MeshBuilder.CreatePlane("", {width: 9 / 16, height: 1}, this);
         const backgroundMaterial = new PBRMaterial("background_material", this);
         backgroundMaterial.unlit = true;
@@ -31,7 +33,7 @@ export class TitleScene extends Scene {
         const stackPanel = new StackPanel("stackPanel");
         grid.addControl(stackPanel, 1, 0);
         
-        const playButton = Button.CreateImageWithCenterTextButton("play", "Play", "http://127.0.0.1:8181/fruit_falling_button.png");
+        const playButton = Button.CreateImageWithCenterTextButton("play", "Play", resourceManifest.buttonPlankUrl);
         playButton.width = "240px";
         playButton.height = "80px";
         playButton.thickness = 0;
