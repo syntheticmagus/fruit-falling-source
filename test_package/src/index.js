@@ -2,9 +2,9 @@ import { initializeBabylonApp } from "app_package";
 
 let assetHostUrl;
 if (DEV_BUILD) {
-    assetHostUrl = "http://127.0.0.1:8181/"
+    assetHostUrl = "http://127.0.0.1:8181/";
 } else {
-    throw new Error("Non-dev build not implemented!");
+    assetHostUrl = "https://syntheticmagus.github.io/fruit-falling-assets/";
 }
 
 document.body.style.width = "100%";
