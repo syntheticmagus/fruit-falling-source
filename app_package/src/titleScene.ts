@@ -31,16 +31,13 @@ export class TitleScene extends Scene {
         guiTexture.addControl(grid);
 
         const stackPanel = new StackPanel("stackPanel");
-        grid.addControl(stackPanel, 1, 0);
+        grid.addControl(stackPanel, 1, 1);
         
         const playButton = Button.CreateImageWithCenterTextButton("play", "Play", resourceManifest.buttonPlankUrl);
-        playButton.width = "240px";
-        playButton.height = "80px";
         playButton.thickness = 0;
         playButton.textBlock!.color = "#FFFFFFFF";
         playButton.textBlock!.fontStyle = "bold";
         playButton.textBlock!.fontFamily = "Courier";
-        playButton.textBlock!.fontSize = "32";
         playButton.textBlock!.outlineWidth = 6;
         playButton.textBlock!.outlineColor = "#000000FF";
         playButton.pointerEnterAnimation = () => {
@@ -53,5 +50,22 @@ export class TitleScene extends Scene {
             this.gameStartedObservable.notifyObservers();
         });
         stackPanel.addControl(playButton);
+
+        const handleResize = (engine: Engine) => {
+            const height = engine.getRenderHeight();
+            const width = height * 9 / 16;
+            const REFERENCE_WIDTH = 320;
+            const factor = width / REFERENCE_WIDTH;
+
+            playButton.widthInPixels = 240 * factor;
+            playButton.heightInPixels = 80 * factor;
+            playButton.textBlock!.fontSize = Math.round(24 * factor);
+            playButton.textBlock!.outlineWidth = Math.round(6 * factor);
+        };
+        handleResize(engine);
+        const resizeObservable = engine.onResizeObservable.add(handleResize);
+        this.onDisposeObservable.addOnce(() => {
+            engine.onResizeObservable.remove(resizeObservable);
+        });
     }
 }

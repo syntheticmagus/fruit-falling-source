@@ -39,8 +39,7 @@ export class RainbowButton extends TransformNode {
         this._faceSprite.position.y = height;
 
         this._button = Button.CreateSimpleButton("rainbowButton_button", "");
-        this._button.widthInPixels = this._gameScene.getEngine().getRenderWidth() * 0.8;
-        this._button.heightInPixels = this._gameScene.getEngine().getRenderHeight() * 0.1;
+        this.resize();
         this._button.thickness = 0;
         this._gameScene.guiTexture.addControl(this._button);
         this._button.linkWithMesh(this._background);
@@ -53,6 +52,11 @@ export class RainbowButton extends TransformNode {
         });
         this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._randomFrameAnimation());
         this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._faceAnimation());
+    }
+
+    public resize() {
+        this._button.widthInPixels = this._gameScene.getEngine().getRenderHeight() * 0.4;
+        this._button.heightInPixels = this._gameScene.getEngine().getRenderHeight() * 0.1;
     }
 
     public chomp() {

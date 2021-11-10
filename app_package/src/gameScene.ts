@@ -1,4 +1,4 @@
-import { Color3, Color4, Engine, Material, MeshBuilder, Observable, PBRMaterial, Scene, SpotLight, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, Engine, Material, MeshBuilder, Nullable, Observable, Observer, PBRMaterial, Scene, SpotLight, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Container, Grid, Image, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
 import { OrthoCamera } from "./orthoCamera";
@@ -29,7 +29,9 @@ export class GameScene extends Scene {
     private _score: number;
     private _livesText: TextBlock;
     private _scoreText: TextBlock;
+    private _countdownText: TextBlock;
     private _resourceManifest: ResourceManifest;
+    private _resizeObserverDisposeObserver: Nullable<Observer<Scene>>;
 
     private get failures(): number {
         return this._failures;
@@ -86,6 +88,42 @@ export class GameScene extends Scene {
         background.material = backgroundMaterial;
         background.position.y = 0.5;
         background.position.z = 1;
+        
+        this._livesText = new TextBlock("lives", "");
+        this._livesText.color = "#FF8888FF";
+        this._livesText.fontStyle = "bold";
+        this._livesText.fontFamily = "Courier";
+        this._livesText.resizeToFit = true;
+        this._livesText.outlineColor = "#000000FF";
+        this._livesText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
+        this._livesText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_RIGHT;
+        this._livesText.isVisible = false;
+        grid.addControl(this._livesText, 1, 1);
+
+        this.failures = 0;
+
+        this._score = 0;
+        this._scoreText = new TextBlock("score", "");
+        this._scoreText.color = "#FFFFFFFF";
+        this._scoreText.fontStyle = "bold";
+        this._scoreText.fontFamily = "Courier";
+        this._scoreText.resizeToFit = true;
+        this._scoreText.outlineColor = "#000000FF";
+        this._scoreText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
+        this._scoreText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_LEFT;
+        this._scoreText.isVisible = false;
+        grid.addControl(this._scoreText, 1, 1);
+        this.score = 0;
+        
+        this._countdownText = new TextBlock("countdown");
+        this._countdownText.color = "#FFFFFFFF";
+        this._countdownText.fontStyle = "bold";
+        this._countdownText.fontFamily = "Courier";
+        this._countdownText.outlineColor = "#000000FF";
+        this._countdownText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_CENTER;
+        this._countdownText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
+        this._countdownText.isVisible = false;
+        this.guiTexture.addControl(this._countdownText);
 
         const colors = [
             new Color3(1.0, 0.0, 0.0),
@@ -120,66 +158,49 @@ export class GameScene extends Scene {
         this._inactiveDrops = new Set<Drop>();
         this._failures = 0;
 
-        this._livesText = new TextBlock("lives", "");
-        this._livesText.color = "#FF8888FF";
-        this._livesText.fontStyle = "bold";
-        this._livesText.fontFamily = "Courier";
-        this._livesText.fontSize = "30";
-        this._livesText.resizeToFit = true;
-        this._livesText.outlineColor = "#000000FF";
-        this._livesText.outlineWidth = 6;
-        this._livesText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
-        this._livesText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_RIGHT;
-        this._livesText.isVisible = false;
-        grid.addControl(this._livesText, 1, 1);
-
-        this.failures = 0;
-
-        this._score = 0;
-        this._scoreText = new TextBlock("score", "");
-        this._scoreText.color = "#FFFFFFFF";
-        this._scoreText.fontStyle = "bold";
-        this._scoreText.fontFamily = "Courier";
-        this._scoreText.fontSize = "30";
-        this._scoreText.resizeToFit = true;
-        this._scoreText.outlineColor = "#000000FF";
-        this._scoreText.outlineWidth = 6;
-        this._scoreText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_TOP;
-        this._scoreText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_LEFT;
-        this._scoreText.isVisible = false;
-        grid.addControl(this._scoreText, 1, 1);
-        this.score = 0;
-
         this.gameEndedObservable = new Observable<void>();
 
         this.onBeforeRenderObservable.runCoroutineAsync(this._runLightSystem());
         this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine(fruitSpriteManager));
+
+        const handleResize = (engine: Engine) => {
+            const height = engine.getRenderHeight();
+            const width = height * 9 / 16;
+            const REFERENCE_WIDTH = 320;
+            const factor = width / REFERENCE_WIDTH;
+
+            grid.setColumnDefinition(1, Math.round(320 * factor), true);
+            this._livesText.fontSizeInPixels = Math.round(30 * factor);
+            this._livesText.outlineWidth = Math.round(6 * factor);
+            this._scoreText.fontSizeInPixels = Math.round(30 * factor);
+            this._scoreText.outlineWidth = Math.round(6 * factor);
+            this._countdownText.widthInPixels = Math.round(200 * factor);
+            this._countdownText.heightInPixels = Math.round(200 * factor);
+            this._countdownText.fontSize = Math.round(64 * factor);
+            this._countdownText.outlineWidth = Math.round(6 * factor);
+            this._buttons.forEach((button) => {
+                button.resize();
+            });
+        };
+        handleResize(engine);
+        const resizeObserver = engine.onResizeObservable.add(handleResize);
+        this._resizeObserverDisposeObserver = this.onDisposeObservable.addOnce(() => {
+            engine.onResizeObservable.remove(resizeObserver);
+        });
     }
 
     private *_rainDropsCoroutine(fruitSpriteManager: SpriteManager) {
 
-        const countdownTextBlock = new TextBlock("countdown");
-        countdownTextBlock.color = "#FFFFFFFF";
-        countdownTextBlock.fontStyle = "bold";
-        countdownTextBlock.fontFamily = "Courier";
-        countdownTextBlock.fontSize = "64";
-        countdownTextBlock.outlineColor = "#000000FF";
-        countdownTextBlock.outlineWidth = 6;
-        countdownTextBlock.height = "200px";
-        countdownTextBlock.width = "200px";
-        countdownTextBlock.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_CENTER;
-        countdownTextBlock.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
-        this.guiTexture.addControl(countdownTextBlock);
-        countdownTextBlock.text = "3";
+        this._countdownText.isVisible = true;
+        this._countdownText.text = "3";
         yield Tools.DelayAsync(1000);
-        countdownTextBlock.text = "2";
+        this._countdownText.text = "2";
         yield Tools.DelayAsync(1000);
-        countdownTextBlock.text = "1";
+        this._countdownText.text = "1";
         yield Tools.DelayAsync(1000);
-        countdownTextBlock.text = "Go!";
+        this._countdownText.text = "Go!";
         Tools.DelayAsync(1000).then(() => {
-            this.guiTexture.removeControl(countdownTextBlock);
-            countdownTextBlock.dispose();
+            this._countdownText.isVisible = false;
         });
         
         this._livesText.isVisible = true;
@@ -250,6 +271,7 @@ export class GameScene extends Scene {
     private _endGame() {
         this._state = GameSceneState.Ending;
 
+        this.onDisposeObservable.remove(this._resizeObserverDisposeObserver);
         this.guiTexture.dispose();
 
         this.guiTexture = AdvancedDynamicTexture.CreateFullscreenUI("gui", true, this);
@@ -263,8 +285,6 @@ export class GameScene extends Scene {
         this.guiTexture.addControl(outerGrid);
 
         const gameOverContainer = new Container("gameOver");
-        gameOverContainer.width = "300px";
-        gameOverContainer.height = "150px";
         outerGrid.addControl(gameOverContainer, 0, 0);
         
         const gameOverImage = new Image("gameOver", this._resourceManifest.imageGameOverUrl);
@@ -310,5 +330,29 @@ export class GameScene extends Scene {
             this.gameEndedObservable.notifyObservers();
         });
         buttonsStackPanel.addControl(playButton);
+
+        const engine = this.getEngine();
+        const handleResize = (engine: Engine) => {
+            const height = engine.getRenderHeight();
+            const width = height * 9 / 16;
+            const REFERENCE_WIDTH = 320;
+            const factor = width / REFERENCE_WIDTH;
+
+            gameOverContainer.widthInPixels = Math.round(300 * factor);
+            gameOverContainer.heightInPixels = Math.round(150 * factor);
+            finalScoreTextBlock.fontSizeInPixels = Math.round(24 * factor);
+            finalScoreTextBlock.outlineWidth = Math.round(6 * factor);
+            finalScoreTextBlock.widthInPixels = Math.round(300 * factor);
+            finalScoreTextBlock.heightInPixels = Math.round(80 * factor);
+            playButton.widthInPixels = Math.round(240 * factor);
+            playButton.heightInPixels = Math.round(80 * factor);
+            playButton.textBlock!.fontSizeInPixels = Math.round(22 * factor);
+            playButton.textBlock!.outlineWidth = Math.round(6 * factor);
+        };
+        handleResize(engine);
+        const resizeObserver = engine.onResizeObservable.add(handleResize);
+        this._resizeObserverDisposeObserver = this.onDisposeObservable.addOnce(() => {
+            engine.onResizeObservable.remove(resizeObserver);
+        });
     }
 }
