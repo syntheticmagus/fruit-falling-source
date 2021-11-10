@@ -58,7 +58,7 @@ export class TitleScene extends Scene {
             const factor = width / REFERENCE_WIDTH;
 
             playButton.widthInPixels = 240 * factor;
-            playButton.heightInPixels = 80 * factor;
+            playButton.heightInPixels = 60 * factor;
             playButton.textBlock!.fontSize = Math.round(24 * factor);
             playButton.textBlock!.outlineWidth = Math.round(6 * factor);
         };

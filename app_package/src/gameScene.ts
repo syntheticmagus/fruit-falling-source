@@ -345,7 +345,7 @@ export class GameScene extends Scene {
             finalScoreTextBlock.widthInPixels = Math.round(300 * factor);
             finalScoreTextBlock.heightInPixels = Math.round(80 * factor);
             playButton.widthInPixels = Math.round(240 * factor);
-            playButton.heightInPixels = Math.round(80 * factor);
+            playButton.heightInPixels = Math.round(60 * factor);
             playButton.textBlock!.fontSizeInPixels = Math.round(22 * factor);
             playButton.textBlock!.outlineWidth = Math.round(6 * factor);
         };
