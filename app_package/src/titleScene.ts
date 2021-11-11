@@ -1,12 +1,13 @@
 import { Color4, Engine, MeshBuilder, Observable, PBRMaterial, Scene, Texture } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Grid, StackPanel } from "@babylonjs/gui";
+import { GameOptions } from "./gameOptions";
 import { OrthoCamera } from "./orthoCamera";
 import { ResourceManifest } from "./ResourceManifest";
 
 export class TitleScene extends Scene {
     public readonly gameStartedObservable: Observable<void> = new Observable<void>();
 
-    constructor (engine: Engine, resourceManifest: ResourceManifest) {
+    constructor (engine: Engine, resourceManifest: ResourceManifest, gameOptions: GameOptions) {
         super(engine);
 
         new OrthoCamera(this);
@@ -25,13 +26,35 @@ export class TitleScene extends Scene {
 
         const grid = new Grid("grid");
         grid.addColumnDefinition(1);
-        grid.addRowDefinition(0.55);
-        grid.addRowDefinition(0.35);
-        grid.addRowDefinition(0.1);
+        grid.addRowDefinition(0.6);
+        grid.addRowDefinition(0.4);
+        grid.addRowDefinition(0);
         guiTexture.addControl(grid);
 
-        const stackPanel = new StackPanel("stackPanel");
-        grid.addControl(stackPanel, 1, 1);
+        const shrinkAndGrowRowsCoroutine = function* (shrinkRow: number, growRow: number) {
+            let shift;
+            const FRAMES = 15;
+            for (let idx = 0; idx <= FRAMES; ++idx) {
+                shift = 0.4 * idx / FRAMES;
+                grid.setRowDefinition(0, 0.6 + shift);
+                grid.setRowDefinition(shrinkRow, 0.4 - shift);
+                yield;
+            }
+            yield;
+            yield;
+            yield;
+            yield;
+            for (let idx = 0; idx <= FRAMES; ++idx) {
+                shift = 0.4 * idx / FRAMES;
+                grid.setRowDefinition(0, 1 - shift);
+                grid.setRowDefinition(growRow, shift);
+                yield;
+            }
+        };
+
+        const mainStackPanel = new StackPanel("mainStackPanel");
+        mainStackPanel.verticalAlignment = StackPanel.VERTICAL_ALIGNMENT_TOP;
+        grid.addControl(mainStackPanel, 1, 0);
         
         const playButton = Button.CreateImageWithCenterTextButton("play", "Play", resourceManifest.buttonPlankUrl);
         playButton.thickness = 0;
@@ -49,7 +72,103 @@ export class TitleScene extends Scene {
         playButton.onPointerClickObservable.add(() => {
             this.gameStartedObservable.notifyObservers();
         });
-        stackPanel.addControl(playButton);
+        mainStackPanel.addControl(playButton);
+
+        const optionsButton = Button.CreateImageWithCenterTextButton("options", "Options", resourceManifest.buttonPlankUrl);
+        optionsButton.thickness = 0;
+        optionsButton.textBlock!.color = "#FFFFFFFF";
+        optionsButton.textBlock!.fontStyle = "bold";
+        optionsButton.textBlock!.fontFamily = "Courier";
+        optionsButton.textBlock!.outlineWidth = 6;
+        optionsButton.textBlock!.outlineColor = "#000000FF";
+        optionsButton.pointerEnterAnimation = () => {
+            optionsButton.textBlock!.outlineColor = "#777777FF";
+        };
+        optionsButton.pointerOutAnimation = () => {
+            optionsButton.textBlock!.outlineColor = "#000000FF";
+        };
+        optionsButton.onPointerClickObservable.add(() => {
+            this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(1, 2));
+        });
+        mainStackPanel.addControl(optionsButton);
+
+        const creditsButton = Button.CreateImageWithCenterTextButton("credits", "Credits", resourceManifest.buttonPlankUrl);
+        creditsButton.thickness = 0;
+        creditsButton.textBlock!.color = "#FFFFFFFF";
+        creditsButton.textBlock!.fontStyle = "bold";
+        creditsButton.textBlock!.fontFamily = "Courier";
+        creditsButton.textBlock!.outlineWidth = 6;
+        creditsButton.textBlock!.outlineColor = "#000000FF";
+        creditsButton.pointerEnterAnimation = () => {
+            creditsButton.textBlock!.outlineColor = "#777777FF";
+        };
+        creditsButton.pointerOutAnimation = () => {
+            creditsButton.textBlock!.outlineColor = "#000000FF";
+        };
+        creditsButton.onPointerClickObservable.add(() => {
+            // TODO
+        });
+        mainStackPanel.addControl(creditsButton);
+
+        const optionsStackPanel = new StackPanel("optionsStackPanel");
+        optionsStackPanel.verticalAlignment = StackPanel.VERTICAL_ALIGNMENT_TOP;
+        grid.addControl(optionsStackPanel, 2, 0);
+        
+        const accessibilityButton = Button.CreateImageWithCenterTextButton("accessibility", "Shape Hints: " + (gameOptions.shapeHints ? "On" : "Off"), resourceManifest.buttonPlankUrl);
+        accessibilityButton.thickness = 0;
+        accessibilityButton.textBlock!.color = "#FFFFFFFF";
+        accessibilityButton.textBlock!.fontStyle = "bold";
+        accessibilityButton.textBlock!.fontFamily = "Courier";
+        accessibilityButton.textBlock!.outlineWidth = 6;
+        accessibilityButton.textBlock!.outlineColor = "#000000FF";
+        accessibilityButton.pointerEnterAnimation = () => {
+            accessibilityButton.textBlock!.outlineColor = "#777777FF";
+        };
+        accessibilityButton.pointerOutAnimation = () => {
+            accessibilityButton.textBlock!.outlineColor = "#000000FF";
+        };
+        accessibilityButton.onPointerClickObservable.add(() => {
+            gameOptions.shapeHints = !gameOptions.shapeHints;
+            accessibilityButton.textBlock!.text = "Shape Hints: " + (gameOptions.shapeHints ? "On" : "Off");
+        });
+        optionsStackPanel.addControl(accessibilityButton);
+        
+        const difficultyButton = Button.CreateImageWithCenterTextButton("difficulty", "Drop Rate: " + (gameOptions.slowDropRate ? "Slow" : "Fast"), resourceManifest.buttonPlankUrl);
+        difficultyButton.thickness = 0;
+        difficultyButton.textBlock!.color = "#FFFFFFFF";
+        difficultyButton.textBlock!.fontStyle = "bold";
+        difficultyButton.textBlock!.fontFamily = "Courier";
+        difficultyButton.textBlock!.outlineWidth = 6;
+        difficultyButton.textBlock!.outlineColor = "#000000FF";
+        difficultyButton.pointerEnterAnimation = () => {
+            difficultyButton.textBlock!.outlineColor = "#777777FF";
+        };
+        difficultyButton.pointerOutAnimation = () => {
+            difficultyButton.textBlock!.outlineColor = "#000000FF";
+        };
+        difficultyButton.onPointerClickObservable.add(() => {
+            gameOptions.slowDropRate = !gameOptions.slowDropRate;
+            difficultyButton.textBlock!.text = "Drop Rate: " + (gameOptions.slowDropRate ? "Slow" : "Fast");
+        });
+        optionsStackPanel.addControl(difficultyButton);
+
+        const backButton = Button.CreateImageWithCenterTextButton("back", "Back", resourceManifest.buttonPlankUrl);
+        backButton.thickness = 0;
+        backButton.textBlock!.color = "#FFFFFFFF";
+        backButton.textBlock!.fontStyle = "bold";
+        backButton.textBlock!.fontFamily = "Courier";
+        backButton.textBlock!.outlineWidth = 6;
+        backButton.textBlock!.outlineColor = "#000000FF";
+        backButton.pointerEnterAnimation = () => {
+            backButton.textBlock!.outlineColor = "#777777FF";
+        };
+        backButton.pointerOutAnimation = () => {
+            backButton.textBlock!.outlineColor = "#000000FF";
+        };
+        backButton.onPointerClickObservable.add(() => {
+            this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(2, 1));
+        });
+        optionsStackPanel.addControl(backButton);
 
         const handleResize = (engine: Engine) => {
             const height = engine.getRenderHeight();
@@ -61,6 +180,31 @@ export class TitleScene extends Scene {
             playButton.heightInPixels = 60 * factor;
             playButton.textBlock!.fontSize = Math.round(24 * factor);
             playButton.textBlock!.outlineWidth = Math.round(6 * factor);
+            
+            optionsButton.widthInPixels = 200 * factor;
+            optionsButton.heightInPixels = 50 * factor;
+            optionsButton.textBlock!.fontSize = Math.round(20 * factor);
+            optionsButton.textBlock!.outlineWidth = Math.round(5 * factor);
+            
+            creditsButton.widthInPixels = 200 * factor;
+            creditsButton.heightInPixels = 50 * factor;
+            creditsButton.textBlock!.fontSize = Math.round(20 * factor);
+            creditsButton.textBlock!.outlineWidth = Math.round(5 * factor);
+
+            accessibilityButton.widthInPixels = 200 * factor;
+            accessibilityButton.heightInPixels = 50 * factor;
+            accessibilityButton.textBlock!.fontSize = Math.round(15 * factor);
+            accessibilityButton.textBlock!.outlineWidth = Math.round(5 * factor);
+
+            difficultyButton.widthInPixels = 200 * factor;
+            difficultyButton.heightInPixels = 50 * factor;
+            difficultyButton.textBlock!.fontSize = Math.round(15 * factor);
+            difficultyButton.textBlock!.outlineWidth = Math.round(5 * factor);
+            
+            backButton.widthInPixels = 200 * factor;
+            backButton.heightInPixels = 50 * factor;
+            backButton.textBlock!.fontSize = Math.round(18 * factor);
+            backButton.textBlock!.outlineWidth = Math.round(5 * factor);
         };
         handleResize(engine);
         const resizeObservable = engine.onResizeObservable.add(handleResize);

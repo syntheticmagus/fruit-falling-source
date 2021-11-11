@@ -10,10 +10,14 @@ export interface InitializeBabylonAppOptions extends ResourceManifest {
 export function initializeBabylonApp(options: InitializeBabylonAppOptions) {
     const canvas = options.canvas;
     const engine = new Engine(canvas);
-    let scene: Scene = new TitleScene(engine, options);
+    const gameOptions = {
+        shapeHints: false,   // TODO: Store and load these settings
+        slowDropRate: false  // TODO: Store and load these settings
+    };
+    let scene: Scene = new TitleScene(engine, options, gameOptions);
     const gameRestartHandler = () => {
         scene.dispose();
-        scene = new GameScene(engine, options);
+        scene = new GameScene(engine, options, gameOptions);
         (scene as GameScene).gameEndedObservable.add(gameRestartHandler);
     };
     (scene as TitleScene).gameStartedObservable.add(gameRestartHandler);

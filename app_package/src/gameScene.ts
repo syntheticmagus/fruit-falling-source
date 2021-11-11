@@ -1,6 +1,7 @@
 import { Color3, Color4, Engine, Material, MeshBuilder, Nullable, Observable, Observer, PBRMaterial, Scene, SpotLight, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Container, Grid, Image, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
+import { GameOptions } from "./gameOptions";
 import { OrthoCamera } from "./orthoCamera";
 import { RainbowButton } from "./rainbowButton";
 import { ResourceManifest } from "./ResourceManifest";
@@ -63,7 +64,7 @@ export class GameScene extends Scene {
         return this._state;
     }
 
-    constructor (engine: Engine, resourceManifest: ResourceManifest) {
+    constructor (engine: Engine, resourceManifest: ResourceManifest, gameOptions: GameOptions) {
         super(engine);
         this._resourceManifest = resourceManifest;
 
@@ -169,7 +170,7 @@ export class GameScene extends Scene {
             const REFERENCE_WIDTH = 320;
             const factor = width / REFERENCE_WIDTH;
 
-            grid.setColumnDefinition(1, Math.round(320 * factor), true);
+            grid.setColumnDefinition(1, Math.round(280 * factor), true);
             this._livesText.fontSizeInPixels = Math.round(30 * factor);
             this._livesText.outlineWidth = Math.round(6 * factor);
             this._scoreText.fontSizeInPixels = Math.round(30 * factor);
@@ -190,7 +191,6 @@ export class GameScene extends Scene {
     }
 
     private *_rainDropsCoroutine(fruitSpriteManager: SpriteManager) {
-
         this._countdownText.isVisible = true;
         this._countdownText.text = "3";
         yield Tools.DelayAsync(1000);
