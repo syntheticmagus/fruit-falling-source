@@ -1,4 +1,4 @@
-import { Color3, Color4, Engine, Material, MeshBuilder, Nullable, Observable, Observer, PBRMaterial, Scene, SpotLight, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, Engine, Material, MeshBuilder, Nullable, Observable, Observer, PBRMaterial, Scene, SpotLight, Sprite, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Container, Grid, Image, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
 import { GameOptions } from "./gameOptions";
@@ -21,6 +21,8 @@ export enum GameButtonColors {
 }
 
 export class GameScene extends Scene {
+    private _resourceManifest: ResourceManifest;
+    private _gameOptions: GameOptions;
     private _state: GameSceneState;
     private _camera: OrthoCamera;
     private _buttons: Array<RainbowButton>;
@@ -31,7 +33,6 @@ export class GameScene extends Scene {
     private _livesText: TextBlock;
     private _scoreText: TextBlock;
     private _countdownText: TextBlock;
-    private _resourceManifest: ResourceManifest;
     private _resizeObserverDisposeObserver: Nullable<Observer<Scene>>;
 
     private get failures(): number {
@@ -67,6 +68,7 @@ export class GameScene extends Scene {
     constructor (engine: Engine, resourceManifest: ResourceManifest, gameOptions: GameOptions) {
         super(engine);
         this._resourceManifest = resourceManifest;
+        this._gameOptions = gameOptions;
 
         this._state = GameSceneState.Raining;
         this._camera = new OrthoCamera(this);
@@ -137,7 +139,7 @@ export class GameScene extends Scene {
         this._buttons = new Array<RainbowButton>(colors.length);
         const frameSpriteManager = new SpriteManager("", this._resourceManifest.spritesheetButtonFrameUrl, 6, {width: 700, height: 180}, this);
         const faceSpriteManager = new SpriteManager("", this._resourceManifest.spritesheetMouthUrl, 6, {width: 456, height: 171}, this);
-        const fruitSpriteManager = new SpriteManager("", this._resourceManifest.spritesheetFruitUrl, 15, {width: 120, height: 160}, this);
+        const fruitSpriteManager = new SpriteManager("", this._resourceManifest.spritesheetFruitUrl, 32, {width: 120, height: 160}, this);
 
         for (let idx = 0; idx < colors.length; ++idx) {
             const height = 0.12 * (idx + 1);
@@ -145,6 +147,26 @@ export class GameScene extends Scene {
             this._buttons[idx].onClickedObservable.add(() => {
                 this._handleButtonPressed(height, idx);
             });
+
+            // Accessibility
+            if (this._gameOptions.shapeHints) {
+                let shapeHint = new Sprite("shapeHint", fruitSpriteManager);
+                const cell = [1, 2, 0, 3, 4, 5][idx];
+                shapeHint.width = 0.05;
+                shapeHint.height = 0.07;
+                shapeHint.position.x = -0.16;
+                shapeHint.position.y = height;
+                shapeHint.position.z = -0.1;
+                shapeHint.cellIndex = cell;
+
+                shapeHint = new Sprite("shapeHint", fruitSpriteManager);
+                shapeHint.width = 0.05;
+                shapeHint.height = 0.07;
+                shapeHint.position.x = 0.16;
+                shapeHint.position.y = height;
+                shapeHint.position.z = -0.1;
+                shapeHint.cellIndex = cell;
+            }
         }
 
         this.dropMaterials = new Array<Material>(colors.length);
@@ -225,7 +247,7 @@ export class GameScene extends Scene {
                 this._activeDrops.delete(drop);
                 this._inactiveDrops.add(drop);
             });
-            yield Tools.DelayAsync(1000);
+            yield Tools.DelayAsync(this._gameOptions.slowDropRate ? 1400 : 1000);
         }
     }
 
