@@ -12,15 +12,25 @@ export function initializeBabylonApp(options: InitializeBabylonAppOptions) {
     const engine = new Engine(canvas);
     const gameOptions = {
         shapeHints: false,   // TODO: Store and load these settings
-        slowDropRate: false  // TODO: Store and load these settings
+        slowDropRate: true  // TODO: Store and load these settings
     };
-    let scene: Scene = new TitleScene(engine, options, gameOptions);
-    const gameRestartHandler = () => {
-        scene.dispose();
+
+    let scene: Scene;
+    let createTitleScene: () => void;
+    let createGameScene: () => void;
+    createTitleScene = () => {
+        scene?.dispose();
+        scene = new TitleScene(engine, options, gameOptions);
+        (scene as TitleScene).gameStartedObservable.add(createGameScene);
+    }
+    createGameScene = () => {
+        scene?.dispose();
         scene = new GameScene(engine, options, gameOptions);
-        (scene as GameScene).gameEndedObservable.add(gameRestartHandler);
+        (scene as GameScene).restartGameObservable.add(createGameScene);
+        (scene as GameScene).exitGameObservable.add(createTitleScene);
     };
-    (scene as TitleScene).gameStartedObservable.add(gameRestartHandler);
+
+    createTitleScene();
     engine.runRenderLoop(() => {
         scene.render();
     });

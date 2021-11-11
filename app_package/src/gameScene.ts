@@ -59,7 +59,8 @@ export class GameScene extends Scene {
 
     public guiTexture: AdvancedDynamicTexture;
     public dropMaterials: Array<Material>;
-    public gameEndedObservable: Observable<void>;
+    public restartGameObservable: Observable<void>;
+    public exitGameObservable: Observable<void>;
 
     public get State() {
         return this._state;
@@ -181,7 +182,8 @@ export class GameScene extends Scene {
         this._inactiveDrops = new Set<Drop>();
         this._failures = 0;
 
-        this.gameEndedObservable = new Observable<void>();
+        this.restartGameObservable = new Observable<void>();
+        this.exitGameObservable = new Observable<void>();
 
         this.onBeforeRenderObservable.runCoroutineAsync(this._runLightSystem());
         this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine(fruitSpriteManager));
@@ -333,14 +335,10 @@ export class GameScene extends Scene {
         outerGrid.addControl(buttonsStackPanel, 1, 0);
 
         const playButton = Button.CreateImageWithCenterTextButton("play", "Play Again", this._resourceManifest.buttonPlankUrl);
-        playButton.width = "240px";
-        playButton.height = "80px";
         playButton.thickness = 0;
         playButton.textBlock!.color = "#FFFFFFFF";
         playButton.textBlock!.fontStyle = "bold";
         playButton.textBlock!.fontFamily = "Courier";
-        playButton.textBlock!.fontSize = "22";
-        playButton.textBlock!.outlineWidth = 6;
         playButton.textBlock!.outlineColor = "#000000FF";
         playButton.pointerEnterAnimation = () => {
             playButton.textBlock!.outlineColor = "#777777FF";
@@ -349,9 +347,26 @@ export class GameScene extends Scene {
             playButton.textBlock!.outlineColor = "#000000FF";
         };
         playButton.onPointerClickObservable.add(() => {
-            this.gameEndedObservable.notifyObservers();
+            this.restartGameObservable.notifyObservers();
         });
         buttonsStackPanel.addControl(playButton);
+
+        const backButton = Button.CreateImageWithCenterTextButton("back", "Back to Title", this._resourceManifest.buttonPlankUrl);
+        backButton.thickness = 0;
+        backButton.textBlock!.color = "#FFFFFFFF";
+        backButton.textBlock!.fontStyle = "bold";
+        backButton.textBlock!.fontFamily = "Courier";
+        backButton.textBlock!.outlineColor = "#000000FF";
+        backButton.pointerEnterAnimation = () => {
+            backButton.textBlock!.outlineColor = "#777777FF";
+        };
+        backButton.pointerOutAnimation = () => {
+            backButton.textBlock!.outlineColor = "#000000FF";
+        };
+        backButton.onPointerClickObservable.add(() => {
+            this.exitGameObservable.notifyObservers();
+        });
+        buttonsStackPanel.addControl(backButton);
 
         const engine = this.getEngine();
         const handleResize = (engine: Engine) => {
@@ -362,14 +377,21 @@ export class GameScene extends Scene {
 
             gameOverContainer.widthInPixels = Math.round(300 * factor);
             gameOverContainer.heightInPixels = Math.round(150 * factor);
+            
             finalScoreTextBlock.fontSizeInPixels = Math.round(24 * factor);
             finalScoreTextBlock.outlineWidth = Math.round(6 * factor);
             finalScoreTextBlock.widthInPixels = Math.round(300 * factor);
             finalScoreTextBlock.heightInPixels = Math.round(80 * factor);
+
             playButton.widthInPixels = Math.round(240 * factor);
             playButton.heightInPixels = Math.round(60 * factor);
-            playButton.textBlock!.fontSizeInPixels = Math.round(22 * factor);
+            playButton.textBlock!.fontSizeInPixels = Math.round(24 * factor);
             playButton.textBlock!.outlineWidth = Math.round(6 * factor);
+            
+            backButton.widthInPixels = Math.round(200 * factor);
+            backButton.heightInPixels = Math.round(50 * factor);
+            backButton.textBlock!.fontSizeInPixels = Math.round(20 * factor);
+            backButton.textBlock!.outlineWidth = Math.round(5 * factor);
         };
         handleResize(engine);
         const resizeObserver = engine.onResizeObservable.add(handleResize);

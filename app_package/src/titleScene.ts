@@ -1,8 +1,14 @@
 import { Color4, Engine, MeshBuilder, Observable, PBRMaterial, Scene, Texture } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Button, Grid, StackPanel } from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Button, Grid, StackPanel, TextBlock } from "@babylonjs/gui";
 import { GameOptions } from "./gameOptions";
 import { OrthoCamera } from "./orthoCamera";
 import { ResourceManifest } from "./ResourceManifest";
+
+const CREDITS: string = 
+`Game by syntheticmagus
+
+Powered by Babylon.js
+`;
 
 export class TitleScene extends Scene {
     public readonly gameStartedObservable: Observable<void> = new Observable<void>();
@@ -28,6 +34,7 @@ export class TitleScene extends Scene {
         grid.addColumnDefinition(1);
         grid.addRowDefinition(0.6);
         grid.addRowDefinition(0.4);
+        grid.addRowDefinition(0);
         grid.addRowDefinition(0);
         guiTexture.addControl(grid);
 
@@ -106,7 +113,7 @@ export class TitleScene extends Scene {
             creditsButton.textBlock!.outlineColor = "#000000FF";
         };
         creditsButton.onPointerClickObservable.add(() => {
-            // TODO
+            this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(1, 3));
         });
         mainStackPanel.addControl(creditsButton);
 
@@ -170,6 +177,38 @@ export class TitleScene extends Scene {
         });
         optionsStackPanel.addControl(backButton);
 
+        const creditsStackPanel = new StackPanel("creditsStackPanel");
+        creditsStackPanel.verticalAlignment = StackPanel.VERTICAL_ALIGNMENT_TOP;
+        grid.addControl(creditsStackPanel, 3, 0);
+
+        const creditsText = new TextBlock("creditsText", CREDITS);
+        creditsText.color = "#FFFFFFFF";
+        creditsText.fontStyle = "bold";
+        creditsText.fontFamily = "Courier";
+        creditsText.outlineWidth = 6;
+        creditsText.outlineColor = "#000000FF";
+        creditsText.textWrapping = true;
+        creditsText.resizeToFit = true;
+        creditsStackPanel.addControl(creditsText);
+
+        const creditsBackButton = Button.CreateImageWithCenterTextButton("creditsBack", "Back", resourceManifest.buttonPlankUrl);
+        creditsBackButton.thickness = 0;
+        creditsBackButton.textBlock!.color = "#FFFFFFFF";
+        creditsBackButton.textBlock!.fontStyle = "bold";
+        creditsBackButton.textBlock!.fontFamily = "Courier";
+        creditsBackButton.textBlock!.outlineWidth = 6;
+        creditsBackButton.textBlock!.outlineColor = "#000000FF";
+        creditsBackButton.pointerEnterAnimation = () => {
+            creditsBackButton.textBlock!.outlineColor = "#777777FF";
+        };
+        creditsBackButton.pointerOutAnimation = () => {
+            creditsBackButton.textBlock!.outlineColor = "#000000FF";
+        };
+        creditsBackButton.onPointerClickObservable.add(() => {
+            this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(3, 1));
+        });
+        creditsStackPanel.addControl(creditsBackButton);
+
         const handleResize = (engine: Engine) => {
             const height = engine.getRenderHeight();
             const width = height * 9 / 16;
@@ -205,6 +244,14 @@ export class TitleScene extends Scene {
             backButton.heightInPixels = 50 * factor;
             backButton.textBlock!.fontSize = Math.round(18 * factor);
             backButton.textBlock!.outlineWidth = Math.round(5 * factor);
+
+            creditsText.fontSizeInPixels = Math.round(18 * factor);
+            creditsText.outlineWidth = Math.round(5 * factor);
+
+            creditsBackButton.widthInPixels = 200 * factor;
+            creditsBackButton.heightInPixels = 50 * factor;
+            creditsBackButton.textBlock!.fontSize = Math.round(18 * factor);
+            creditsBackButton.textBlock!.outlineWidth = Math.round(5 * factor);
         };
         handleResize(engine);
         const resizeObservable = engine.onResizeObservable.add(handleResize);
