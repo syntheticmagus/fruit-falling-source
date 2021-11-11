@@ -1,4 +1,4 @@
-import { Color4, Engine, MeshBuilder, Observable, PBRMaterial, Scene, Texture } from "@babylonjs/core";
+import { Color4, Engine, MeshBuilder, Observable, PBRMaterial, Scene, Sound, Texture } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Grid, StackPanel, TextBlock } from "@babylonjs/gui";
 import { GameOptions } from "./gameOptions";
 import { OrthoCamera } from "./orthoCamera";
@@ -18,6 +18,11 @@ export class TitleScene extends Scene {
 
         new OrthoCamera(this);
         this.clearColor = new Color4(0, 0, 0, 1);
+
+        const clickSound = new Sound("click", resourceManifest.soundClickUrl, this);
+        clickSound.autoplay = false;
+        clickSound.loop = false;
+        clickSound.setVolume(0.2);
 
         const backgroundTexture = new Texture(resourceManifest.backgroundTitleUrl, this, true);
         const background = MeshBuilder.CreatePlane("", {width: 9 / 16, height: 1}, this);
@@ -76,6 +81,9 @@ export class TitleScene extends Scene {
         playButton.pointerOutAnimation = () => {
             playButton.textBlock!.outlineColor = "#000000FF";
         };
+        playButton.onPointerDownObservable.add(() => {
+            clickSound.play();
+        });
         playButton.onPointerClickObservable.add(() => {
             this.gameStartedObservable.notifyObservers();
         });
@@ -94,6 +102,9 @@ export class TitleScene extends Scene {
         optionsButton.pointerOutAnimation = () => {
             optionsButton.textBlock!.outlineColor = "#000000FF";
         };
+        optionsButton.onPointerDownObservable.add(() => {
+            clickSound.play();
+        });
         optionsButton.onPointerClickObservable.add(() => {
             this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(1, 2));
         });
@@ -112,6 +123,9 @@ export class TitleScene extends Scene {
         creditsButton.pointerOutAnimation = () => {
             creditsButton.textBlock!.outlineColor = "#000000FF";
         };
+        creditsButton.onPointerDownObservable.add(() => {
+            clickSound.play();
+        });
         creditsButton.onPointerClickObservable.add(() => {
             this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(1, 3));
         });
@@ -134,6 +148,9 @@ export class TitleScene extends Scene {
         accessibilityButton.pointerOutAnimation = () => {
             accessibilityButton.textBlock!.outlineColor = "#000000FF";
         };
+        accessibilityButton.onPointerDownObservable.add(() => {
+            clickSound.play();
+        });
         accessibilityButton.onPointerClickObservable.add(() => {
             gameOptions.shapeHints = !gameOptions.shapeHints;
             accessibilityButton.textBlock!.text = "Shape Hints: " + (gameOptions.shapeHints ? "On" : "Off");
@@ -153,6 +170,9 @@ export class TitleScene extends Scene {
         difficultyButton.pointerOutAnimation = () => {
             difficultyButton.textBlock!.outlineColor = "#000000FF";
         };
+        difficultyButton.onPointerDownObservable.add(() => {
+            clickSound.play();
+        });
         difficultyButton.onPointerClickObservable.add(() => {
             gameOptions.slowDropRate = !gameOptions.slowDropRate;
             difficultyButton.textBlock!.text = "Drop Rate: " + (gameOptions.slowDropRate ? "Slow" : "Fast");
@@ -172,6 +192,9 @@ export class TitleScene extends Scene {
         backButton.pointerOutAnimation = () => {
             backButton.textBlock!.outlineColor = "#000000FF";
         };
+        backButton.onPointerDownObservable.add(() => {
+            clickSound.play();
+        });
         backButton.onPointerClickObservable.add(() => {
             this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(2, 1));
         });
@@ -204,6 +227,9 @@ export class TitleScene extends Scene {
         creditsBackButton.pointerOutAnimation = () => {
             creditsBackButton.textBlock!.outlineColor = "#000000FF";
         };
+        creditsBackButton.onPointerDownObservable.add(() => {
+            clickSound.play();
+        });
         creditsBackButton.onPointerClickObservable.add(() => {
             this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(3, 1));
         });

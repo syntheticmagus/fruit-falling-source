@@ -42,5 +42,12 @@ initializeBabylonApp({
     imageGameOverUrl: assetHostUrl + "image_game_over.png",
     spritesheetButtonFrameUrl: assetHostUrl + "spritesheet_button_frame.png",
     spritesheetFruitUrl: assetHostUrl + "spritesheet_fruit.png",
-    spritesheetMouthUrl: assetHostUrl + "spritesheet_mouth.png"
+    spritesheetMouthUrl: assetHostUrl + "spritesheet_mouth.png",
+    soundMusicUrl: assetHostUrl + "sound_music.mp3",
+    soundChompUrl: assetHostUrl + "sound_chomp.mp3",
+    soundChompYumUrl: assetHostUrl + "sound_chomp_yum.mp3",
+    soundChompYuckUrl: assetHostUrl + "sound_chomp_yuck.mp3",
+    soundCountdownUrl: assetHostUrl + "sound_countdown.mp3",
+    soundGoUrl: assetHostUrl + "sound_go.mp3",
+    soundClickUrl: assetHostUrl + "sound_click.mp3"
 });

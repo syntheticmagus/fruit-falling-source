@@ -1,4 +1,4 @@
-import { Color3, Color4, Engine, Material, MeshBuilder, Nullable, Observable, Observer, PBRMaterial, Scene, SpotLight, Sprite, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
+import { Color3, Color4, Engine, Material, MeshBuilder, Nullable, Observable, Observer, PBRMaterial, Scene, Sound, SpotLight, Sprite, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Container, Grid, Image, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
 import { GameOptions } from "./gameOptions";
@@ -25,6 +25,12 @@ export class GameScene extends Scene {
     private _gameOptions: GameOptions;
     private _state: GameSceneState;
     private _camera: OrthoCamera;
+    private _musicSound: Sound;
+    private _chompSound: Sound;
+    private _chompAndYumSound: Sound;
+    private _chompAndYuckSound: Sound;
+    private _countdownSound: Sound;
+    private _goSound: Sound;
     private _buttons: Array<RainbowButton>;
     private _activeDrops: Set<Drop>;
     private _inactiveDrops: Set<Drop>;
@@ -34,6 +40,7 @@ export class GameScene extends Scene {
     private _scoreText: TextBlock;
     private _countdownText: TextBlock;
     private _resizeObserverDisposeObserver: Nullable<Observer<Scene>>;
+
 
     private get failures(): number {
         return this._failures;
@@ -75,6 +82,31 @@ export class GameScene extends Scene {
         this._camera = new OrthoCamera(this);
         this.clearColor = new Color4(0, 0, 0, 1);
         this.guiTexture = AdvancedDynamicTexture.CreateFullscreenUI("gui", true, this);
+
+        this._musicSound = new Sound("music", this._resourceManifest.soundMusicUrl, this);
+        this._musicSound.autoplay = false;
+        this._musicSound.loop = true;
+        this._musicSound.setVolume(0.3);
+        this._chompSound = new Sound("chomp", this._resourceManifest.soundChompUrl, this);
+        this._chompSound.autoplay = false;
+        this._chompSound.loop = false;
+        this._chompSound.setVolume(0.2);
+        this._chompAndYumSound = new Sound("chompAndYum", this._resourceManifest.soundChompYumUrl, this);
+        this._chompAndYumSound.autoplay = false;
+        this._chompAndYumSound.loop = false;
+        this._chompAndYumSound.setVolume(0.2);
+        this._chompAndYuckSound = new Sound("chompAndYuck", this._resourceManifest.soundChompYuckUrl, this);
+        this._chompAndYuckSound.autoplay = false;
+        this._chompAndYuckSound.loop = false;
+        this._chompAndYuckSound.setVolume(0.1);
+        this._countdownSound = new Sound("countdown", this._resourceManifest.soundCountdownUrl, this);
+        this._countdownSound.autoplay = false;
+        this._countdownSound.loop = false;
+        this._countdownSound.setVolume(0.4);
+        this._goSound = new Sound("go", this._resourceManifest.soundGoUrl, this);
+        this._goSound.autoplay = false;
+        this._goSound.loop = false;
+        this._goSound.setVolume(0.4);
 
         const grid = new Grid("grid");
         grid.addColumnDefinition(0.5);
@@ -185,7 +217,6 @@ export class GameScene extends Scene {
         this.restartGameObservable = new Observable<void>();
         this.exitGameObservable = new Observable<void>();
 
-        this.onBeforeRenderObservable.runCoroutineAsync(this._runLightSystem());
         this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine(fruitSpriteManager));
 
         const handleResize = (engine: Engine) => {
@@ -215,16 +246,23 @@ export class GameScene extends Scene {
     }
 
     private *_rainDropsCoroutine(fruitSpriteManager: SpriteManager) {
+        yield Tools.DelayAsync(1000);
+
         this._countdownText.isVisible = true;
         this._countdownText.text = "3";
+        this._countdownSound.play();
         yield Tools.DelayAsync(1000);
         this._countdownText.text = "2";
+        this._countdownSound.play();
         yield Tools.DelayAsync(1000);
         this._countdownText.text = "1";
+        this._countdownSound.play();
         yield Tools.DelayAsync(1000);
         this._countdownText.text = "Go!";
+        this._goSound.play();
         Tools.DelayAsync(1000).then(() => {
             this._countdownText.isVisible = false;
+            this._musicSound.play();
         });
         
         this._livesText.isVisible = true;
@@ -253,46 +291,36 @@ export class GameScene extends Scene {
         }
     }
 
-    private *_runLightSystem() {
-        const setLightDirection = (light: SpotLight) => {
-            light.direction.copyFrom(light.position);
-            light.direction.negateInPlace();
-            light.direction.z += 5;
-            light.direction.normalize();
-        }
-        const light = new SpotLight("light", new Vector3(-3, 3, -5), Vector3.Down(), Math.PI, 1, this);
-        light.diffuse = new Color3(1.0, 1.0, 1.0);
-        
-        const TIME_SCALE = 1;
-        let t = 0;
-        while (this._state === GameSceneState.Raining) { 
-            t += (TIME_SCALE / (60 * this.getAnimationRatio()));
-            light.position.x = 3 * Math.sin(t);
-            light.position.y = 3 * Math.sin(-t) + 1;
-            setLightDirection(light);
-            yield;
-        }
-    }
-
     private _handleButtonPressed(height: number, color: GameButtonColors) {
+        this._chompSound.stop();
+        this._chompAndYumSound.stop();
+        this._chompAndYuckSound.stop();
+
         this._activeDrops.forEach((drop) => {
             if (Math.abs(drop.position.y - height) < 0.05) {
                 drop.Caught = true;
                 if (color === drop.Color) {
-                    this.score += 1;
                     this._buttons[color].chompAndSmile();
+                    this._chompAndYumSound.play();
+                    this.score += 1;
                     return;
                 } else {
-                    this.failures += 1;
                     this._buttons[color].chompAndBleh();
+                    this._chompAndYuckSound.play();
+                    this.failures += 1;
                     return;
                 }
             }
         });
+        this._chompSound.play();
         this._buttons[color].chomp();
     }
 
     private _endGame() {
+        this._chompSound.stop();
+        this._chompAndYumSound.stop();
+        this._chompAndYuckSound.stop();
+
         this._state = GameSceneState.Ending;
 
         this.onDisposeObservable.remove(this._resizeObserverDisposeObserver);
@@ -334,6 +362,11 @@ export class GameScene extends Scene {
         const buttonsStackPanel = new StackPanel("stackPanel");
         outerGrid.addControl(buttonsStackPanel, 1, 0);
 
+        const clickSound = new Sound("click", this._resourceManifest.soundClickUrl, this);
+        clickSound.autoplay = false;
+        clickSound.loop = false;
+        clickSound.setVolume(0.2);
+
         const playButton = Button.CreateImageWithCenterTextButton("play", "Play Again", this._resourceManifest.buttonPlankUrl);
         playButton.thickness = 0;
         playButton.textBlock!.color = "#FFFFFFFF";
@@ -346,6 +379,9 @@ export class GameScene extends Scene {
         playButton.pointerOutAnimation = () => {
             playButton.textBlock!.outlineColor = "#000000FF";
         };
+        playButton.onPointerDownObservable.add(() => {
+            clickSound.play();
+        });
         playButton.onPointerClickObservable.add(() => {
             this.restartGameObservable.notifyObservers();
         });
@@ -363,6 +399,9 @@ export class GameScene extends Scene {
         backButton.pointerOutAnimation = () => {
             backButton.textBlock!.outlineColor = "#000000FF";
         };
+        backButton.onPointerDownObservable.add(() => {
+            clickSound.play();
+        })
         backButton.onPointerClickObservable.add(() => {
             this.exitGameObservable.notifyObservers();
         });
