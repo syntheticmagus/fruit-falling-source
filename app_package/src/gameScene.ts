@@ -1,6 +1,7 @@
 import { Color3, Color4, Engine, Material, MeshBuilder, Nullable, Observable, Observer, PBRMaterial, Scene, Sound, SpotLight, Sprite, SpriteManager, StandardMaterial, Texture, Tools, Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Container, Grid, Image, StackPanel, TextBlock } from "@babylonjs/gui";
 import { Drop } from "./drop";
+import { FixedFramerateObservable } from "./fixedFramerateObservable";
 import { GameOptions } from "./gameOptions";
 import { OrthoCamera } from "./orthoCamera";
 import { RainbowButton } from "./rainbowButton";
@@ -66,6 +67,7 @@ export class GameScene extends Scene {
 
     public guiTexture: AdvancedDynamicTexture;
     public dropMaterials: Array<Material>;
+    public updateObservable: FixedFramerateObservable;
     public restartGameObservable: Observable<void>;
     public exitGameObservable: Observable<void>;
 
@@ -82,6 +84,10 @@ export class GameScene extends Scene {
         this._camera = new OrthoCamera(this);
         this.clearColor = new Color4(0, 0, 0, 1);
         this.guiTexture = AdvancedDynamicTexture.CreateFullscreenUI("gui", true, this);
+        
+        this.updateObservable = new FixedFramerateObservable(this, 20);
+        this.restartGameObservable = new Observable<void>();
+        this.exitGameObservable = new Observable<void>();
 
         this._musicSound = new Sound("music", this._resourceManifest.soundMusicUrl, this);
         this._musicSound.autoplay = false;
@@ -214,10 +220,7 @@ export class GameScene extends Scene {
         this._inactiveDrops = new Set<Drop>();
         this._failures = 0;
 
-        this.restartGameObservable = new Observable<void>();
-        this.exitGameObservable = new Observable<void>();
-
-        this.onBeforeRenderObservable.runCoroutineAsync(this._rainDropsCoroutine(fruitSpriteManager));
+        this.updateObservable.runCoroutineAsync(this._rainDropsCoroutine(fruitSpriteManager));
 
         const handleResize = (engine: Engine) => {
             const height = engine.getRenderHeight();
@@ -243,6 +246,11 @@ export class GameScene extends Scene {
         this._resizeObserverDisposeObserver = this.onDisposeObservable.addOnce(() => {
             engine.onResizeObservable.remove(resizeObserver);
         });
+    }
+
+    public override dispose() {
+        this.updateObservable.dispose();
+        super.dispose();
     }
 
     private *_rainDropsCoroutine(fruitSpriteManager: SpriteManager) {

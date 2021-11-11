@@ -44,9 +44,21 @@ export class Drop extends TransformNode {
         this.position.z = -1;
 
         this._falling = true;
-        await this.getScene().onBeforeRenderObservable.runCoroutineAsync(this.fallCoroutine());
+        this._gameScene.updateObservable.runCoroutineAsync(this.animateSpriteCoroutine());
+        await this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this.fallCoroutine());
         this._falling = false;
         return true;
+    }
+
+    private *animateSpriteCoroutine() {
+        let frame = 0;
+        while (this._falling) {
+            if (frame % 4 == 0) {
+                this._sprite.cellIndex = (this._sprite.cellIndex + 6) % 24;
+            }
+            frame += 1;
+            yield;
+        }
     }
 
     private *fallCoroutine() {
@@ -75,14 +87,9 @@ export class Drop extends TransformNode {
         this._sprite.isVisible = true;
 
         const FALL_SPEED = 0.005;
-        let frameIdx = 0;
         while (this._gameScene.State === GameSceneState.Raining && this.position.y > -0.05) {
             this.position.y -= FALL_SPEED * this._scene.getAnimationRatio();
             this._sprite.position.copyFrom(this.position);
-            if (frameIdx % 6 === 0) {
-                this._sprite.cellIndex = (this._sprite.cellIndex + 6) % 24;
-            }
-            ++frameIdx;
             yield;
         }
 

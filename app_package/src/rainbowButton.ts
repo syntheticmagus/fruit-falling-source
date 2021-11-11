@@ -47,11 +47,11 @@ export class RainbowButton extends TransformNode {
         this.onClickedObservable = new Observable<void>();
 
         this._button.onPointerDownObservable.add(() => {
-            this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._onClickCoroutine());
+            this._gameScene.updateObservable.runCoroutineAsync(this._onClickCoroutine());
             this.onClickedObservable.notifyObservers();
         });
-        this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._randomFrameAnimation());
-        this._gameScene.onBeforeRenderObservable.runCoroutineAsync(this._faceAnimation());
+        this._gameScene.updateObservable.runCoroutineAsync(this._randomFrameAnimation());
+        this._gameScene.updateObservable.runCoroutineAsync(this._faceAnimation());
     }
 
     public resize() {
@@ -78,8 +78,6 @@ export class RainbowButton extends TransformNode {
         this._background.scaling.scaleInPlace(SCALE);
 
         yield;
-        yield;
-        yield;
         
         this._frameSprite.width *= 1 / SCALE;
         this._frameSprite.height *= 1 / SCALE;
@@ -93,11 +91,6 @@ export class RainbowButton extends TransformNode {
             rand = Math.random();
             if (rand < THRESHOLD) {
                 this._frameSprite.cellIndex = Math.floor(5 * rand / THRESHOLD);
-                yield;
-                yield;
-                yield;
-                yield;
-                yield;
                 yield;
                 yield;
                 yield;
@@ -183,7 +176,7 @@ export class RainbowButton extends TransformNode {
             this._faceSprite.cellIndex = ANIMATIONS[animation][frameIdx];
             frameIdx += 1;
 
-            for (let idx = 0; !this._chompAndSmileRequested && !this._chompAndBlehRequested && !this._chompRequested && idx < 5; ++idx) {
+            for (let idx = 0; !this._chompAndSmileRequested && !this._chompAndBlehRequested && !this._chompRequested && idx < 2; ++idx) {
                 yield;
             }
         }

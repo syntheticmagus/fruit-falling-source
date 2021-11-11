@@ -1,5 +1,6 @@
 import { Color4, Engine, MeshBuilder, Observable, PBRMaterial, Scene, Sound, Texture } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Grid, StackPanel, TextBlock } from "@babylonjs/gui";
+import { FixedFramerateObservable } from "./fixedFramerateObservable";
 import { GameOptions } from "./gameOptions";
 import { OrthoCamera } from "./orthoCamera";
 import { ResourceManifest } from "./ResourceManifest";
@@ -11,10 +12,12 @@ Powered by Babylon.js
 `;
 
 export class TitleScene extends Scene {
+    private readonly _updateObservable: FixedFramerateObservable;
     public readonly gameStartedObservable: Observable<void> = new Observable<void>();
 
-    constructor (engine: Engine, resourceManifest: ResourceManifest, gameOptions: GameOptions) {
+    public constructor (engine: Engine, resourceManifest: ResourceManifest, gameOptions: GameOptions) {
         super(engine);
+        this._updateObservable = new FixedFramerateObservable(this, 30);
 
         new OrthoCamera(this);
         this.clearColor = new Color4(0, 0, 0, 1);
@@ -45,15 +48,13 @@ export class TitleScene extends Scene {
 
         const shrinkAndGrowRowsCoroutine = function* (shrinkRow: number, growRow: number) {
             let shift;
-            const FRAMES = 15;
+            const FRAMES = 8;
             for (let idx = 0; idx <= FRAMES; ++idx) {
                 shift = 0.4 * idx / FRAMES;
                 grid.setRowDefinition(0, 0.6 + shift);
                 grid.setRowDefinition(shrinkRow, 0.4 - shift);
                 yield;
             }
-            yield;
-            yield;
             yield;
             yield;
             for (let idx = 0; idx <= FRAMES; ++idx) {
@@ -106,7 +107,7 @@ export class TitleScene extends Scene {
             clickSound.play();
         });
         optionsButton.onPointerClickObservable.add(() => {
-            this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(1, 2));
+            this._updateObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(1, 2));
         });
         mainStackPanel.addControl(optionsButton);
 
@@ -127,7 +128,7 @@ export class TitleScene extends Scene {
             clickSound.play();
         });
         creditsButton.onPointerClickObservable.add(() => {
-            this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(1, 3));
+            this._updateObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(1, 3));
         });
         mainStackPanel.addControl(creditsButton);
 
@@ -196,7 +197,7 @@ export class TitleScene extends Scene {
             clickSound.play();
         });
         backButton.onPointerClickObservable.add(() => {
-            this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(2, 1));
+            this._updateObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(2, 1));
         });
         optionsStackPanel.addControl(backButton);
 
@@ -231,7 +232,7 @@ export class TitleScene extends Scene {
             clickSound.play();
         });
         creditsBackButton.onPointerClickObservable.add(() => {
-            this.onBeforeRenderObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(3, 1));
+            this._updateObservable.runCoroutineAsync(shrinkAndGrowRowsCoroutine(3, 1));
         });
         creditsStackPanel.addControl(creditsBackButton);
 
@@ -284,5 +285,10 @@ export class TitleScene extends Scene {
         this.onDisposeObservable.addOnce(() => {
             engine.onResizeObservable.remove(resizeObservable);
         });
+    }
+
+    public override dispose() {
+        this._updateObservable.dispose();
+        super.dispose();
     }
 }
