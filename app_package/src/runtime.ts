@@ -35,6 +35,6 @@ export function initializeBabylonApp(options: InitializeBabylonAppOptions) {
         scene.render();
     });
     window.addEventListener("resize", () => {
-        engine.resize();
+        engine.resize(true);
     });
 }
