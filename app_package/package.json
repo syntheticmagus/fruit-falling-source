@@ -1,6 +1,6 @@
 {
   "name": "rainbow-drop",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Simple test case for the Babylon.js Golden Path",
   "main": "lib/index.js",
   "types": "lib",
