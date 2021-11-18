@@ -1,7 +1,7 @@
 {
-  "name": "rainbow-drop",
-  "version": "0.0.3",
-  "description": "Simple test case for the Babylon.js Golden Path",
+  "name": "fruit-fallin",
+  "version": "0.0.1",
+  "description": "Flash-inspired game made with Babylon.js",
   "main": "lib/index.js",
   "types": "lib",
   "scripts": {
